@@ -14,10 +14,10 @@ app.get('/', (req: Request, res: Response) => {
 // Route to get all users
 app.get('/users', async (req: Request, res: Response) => {
   try {
-    const users = await prisma.user.findMany();
-    res.json(users);
+    const users = await prisma.user.findMany(); // Fetch all users from the database
+    res.json(users); // Send the users as a JSON response
   } catch (error) {
-    res.status(500).json({ error: 'An error occurred while fetching users.' });
+    res.status(500).json({ error: 'An error occurred while fetching users' });
   }
 });
 
