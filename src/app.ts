@@ -1,16 +1,26 @@
 import express, { Request, Response } from 'express';
+import { PrismaClient } from '@prisma/client';
 
 const app = express();
+const prisma = new PrismaClient();
 
-// Middleware for parsing JSON bodies
 app.use(express.json());
 
-// Example route
+// Root route
 app.get('/', (req: Request, res: Response) => {
   res.send('Hello TypeScript World!');
 });
 
-// Set up the server
+// Route to get all users
+app.get('/users', async (req: Request, res: Response) => {
+  try {
+    const users = await prisma.user.findMany();
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ error: 'An error occurred while fetching users.' });
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
