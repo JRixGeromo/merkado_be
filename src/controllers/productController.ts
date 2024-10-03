@@ -1,27 +1,76 @@
 import { Request, Response } from 'express';
 import prisma from '../prisma';
 
-// Create a new product
 export const createProduct = async (req: Request, res: Response): Promise<void> => {
   const { name, stock, price, vendorId, categoryId, images } = req.body;
+
   try {
+    // Check if vendor exists
+    const vendor = await prisma.vendorProfile.findUnique({
+      where: { id: vendorId },
+    });
+
+    if (!vendor) {
+      res.status(404).json({ error: 'Vendor not found' });
+      return;  // Return after sending the response to prevent further execution
+    }
+
+    // Proceed with product creation if vendor exists
     const product = await prisma.product.create({
       data: {
         name,
         stock,
         price,
         vendor: { connect: { id: vendorId } },
-        category: { connect: { id: categoryId } }, // Ensure categoryId is passed and connected
+        category: { connect: { id: categoryId } },
         images: {
           create: images.map((imgUrl: string) => ({ imageUrl: imgUrl })),
         },
       },
     });
-    res.json(product);
+
+    res.json(product);  // Send response without returning it
   } catch (error) {
-    res.status(500).json({ error: 'Product creation failed' });
+    console.error("Product creation failed:", error);
+    res.status(500).json({ error: 'Product creation failed', details: error });
   }
 };
+
+
+// export const createProduct = async (req: Request, res: Response): Promise<Response> => {
+//   const { name, stock, price, vendorId, categoryId, images } = req.body;
+
+//   try {
+//     // Check if vendor exists
+//     const vendor = await prisma.vendorProfile.findUnique({
+//       where: { id: vendorId },
+//     });
+
+//     if (!vendor) {
+//       return res.status(404).json({ error: 'Vendor not found' });
+//     }
+
+//     // Proceed with product creation if vendor exists
+//     const product = await prisma.product.create({
+//       data: {
+//         name,
+//         stock,
+//         price,
+//         vendor: { connect: { id: vendorId } },
+//         category: { connect: { id: categoryId } },
+//         images: {
+//           create: images.map((imgUrl: string) => ({ imageUrl: imgUrl })),
+//         },
+//       },
+//     });
+
+//     console.log("Product created:", product);
+//     return res.json(product);
+//   } catch (error) {
+//     console.error("Product creation failed:", error);
+//     return res.status(500).json({ error: 'Product creation failed', details: error });
+//   }
+// };
 
 
 // Get all products
