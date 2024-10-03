@@ -2,46 +2,47 @@ import { Request, Response } from 'express';
 import prisma from '../prisma';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
+
+// Utility function to omit specific fields
+function omit<T extends object, K extends keyof T>(obj: T, key: K): Omit<T, K> {
+  const { [key]: _, ...rest } = obj;
+  return rest;
+}
 
 // Register a new user
 export const registerUser = async (req: Request, res: Response): Promise<void> => {
-  const { email, password } = req.body;
-  try {
-    // Check if the user already exists
-    const existingUser = await prisma.user.findUnique({ where: { email } });
-    if (existingUser) {
-      res.status(400).json({ error: 'Email is already registered' });
-      return;
-    }
-
-    // If not, create the user
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = await prisma.user.create({
-      data: {
-        email,
-        password: hashedPassword,
-      },
-    });
-    const token = jwt.sign({ userId: newUser.id }, process.env.JWT_SECRET as string, { expiresIn: '1d' });
-    res.json({ token, user: newUser });
-  } catch (error) {
-    // Log the full error stack for debugging
-    console.error("Registration Error Stack:", error);
-
-    if (error instanceof PrismaClientKnownRequestError) {
-      if (error.code === 'P2002') {
-        res.status(400).json({ error: 'User with this email already exists' });
+    const { email, password } = req.body;
+    try {
+      // Check if the user already exists
+      const existingUser = await prisma.user.findUnique({ where: { email } });
+      if (existingUser) {
+        res.status(400).json({ error: 'Email is already registered' });
         return;
       }
+  
+      // Create the user
+      const hashedPassword = await bcrypt.hash(password, 10);
+      const newUser = await prisma.user.create({
+        data: {
+          email,
+          password: hashedPassword,
+        },
+      });
+  
+      // Generate the token
+      const token = jwt.sign({ userId: newUser.id }, process.env.JWT_SECRET as string, { expiresIn: '1d' });
+  
+      // Exclude password from the user object
+      const { password: _, ...userWithoutPassword } = newUser;
+  
+      // Send response without password
+      res.json({ token, user: userWithoutPassword });
+    } catch (error) {
+      console.error("Registration Error:", error);
+      res.status(500).json({ error: 'User registration failed' });
     }
-
-    // Send a generic error message to the client
-    res.status(500).json({ error: 'User registration failed' });
-  }
-};
-
-
+  };
+  
 // Login user
 export const loginUser = async (req: Request, res: Response): Promise<void> => {
   const { email, password } = req.body;
