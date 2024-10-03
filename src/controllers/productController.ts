@@ -37,42 +37,6 @@ export const createProduct = async (req: Request, res: Response): Promise<void> 
 };
 
 
-// export const createProduct = async (req: Request, res: Response): Promise<Response> => {
-//   const { name, stock, price, vendorId, categoryId, images } = req.body;
-
-//   try {
-//     // Check if vendor exists
-//     const vendor = await prisma.vendorProfile.findUnique({
-//       where: { id: vendorId },
-//     });
-
-//     if (!vendor) {
-//       return res.status(404).json({ error: 'Vendor not found' });
-//     }
-
-//     // Proceed with product creation if vendor exists
-//     const product = await prisma.product.create({
-//       data: {
-//         name,
-//         stock,
-//         price,
-//         vendor: { connect: { id: vendorId } },
-//         category: { connect: { id: categoryId } },
-//         images: {
-//           create: images.map((imgUrl: string) => ({ imageUrl: imgUrl })),
-//         },
-//       },
-//     });
-
-//     console.log("Product created:", product);
-//     return res.json(product);
-//   } catch (error) {
-//     console.error("Product creation failed:", error);
-//     return res.status(500).json({ error: 'Product creation failed', details: error });
-//   }
-// };
-
-
 // Get all products
 export const getAllProducts = async (req: Request, res: Response) => {
   try {
