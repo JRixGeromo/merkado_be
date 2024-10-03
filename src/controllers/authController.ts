@@ -39,28 +39,33 @@ export const registerUser = async (req: Request, res: Response): Promise<void> =
   
 // Login user
 export const loginUser = async (req: Request, res: Response): Promise<void> => {
-  const { email, password } = req.body;
-  try {
-    const user = await prisma.user.findUnique({ where: { email } });
-    
-    if (!user || !user.password) {
-      res.status(401).json({ error: 'Invalid credentials' });
-      return;
+    const { email, password } = req.body;
+    try {
+      const user = await prisma.user.findUnique({ where: { email } });
+      if (!user || !user.password) {
+        res.status(401).json({ error: 'Invalid credentials' });
+        return;
+      }
+  
+      const isPasswordValid = await bcrypt.compare(password, user.password);
+      if (!isPasswordValid) {
+        res.status(401).json({ error: 'Invalid credentials' });
+        return;
+      }
+  
+      const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET as string, { expiresIn: '1d' });
+  
+      // Omit password from the user object
+      const { password: _, ...userWithoutPassword } = user;
+  
+      // Send response without the password
+      res.json({ token, user: userWithoutPassword });
+    } catch (error) {
+      console.error("Login Error:", error);
+      res.status(500).json({ error: 'Login failed' });
     }
-
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
-      res.status(401).json({ error: 'Invalid credentials' });
-      return;
-    }
-
-    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET as string, { expiresIn: '1d' });
-    res.json({ token, user });
-  } catch (error) {
-    res.status(500).json({ error: 'Login failed' });
-  }
-};
-
+  };
+  
 // OAuth for Google
 export const googleAuth = (req: Request, res: Response) => {
   // Handle Google OAuth login
