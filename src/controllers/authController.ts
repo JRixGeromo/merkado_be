@@ -3,12 +3,6 @@ import prisma from '../prisma';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
-// Utility function to omit specific fields
-function omit<T extends object, K extends keyof T>(obj: T, key: K): Omit<T, K> {
-  const { [key]: _, ...rest } = obj;
-  return rest;
-}
-
 // Register a new user
 export const registerUser = async (req: Request, res: Response): Promise<void> => {
     const { email, password } = req.body;
