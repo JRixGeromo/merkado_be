@@ -11,15 +11,25 @@ datasource db {
 }
 
 model User {
-  id              Int       @id @default(autoincrement())
-  email           String    @unique
-  password        String
+  id              Int               @id @default(autoincrement())
+  email           String?           @unique
+  password        String?
   vendorProfile   VendorProfile?
   orders          Order[]
   addresses       Address[]
-  sentMessages    Chat[]    @relation("SentMessages")
-  receivedMessages Chat[]   @relation("ReceivedMessages")
+  sentMessages    Chat[]            @relation("SentMessages")
+  receivedMessages Chat[]           @relation("ReceivedMessages")
+  socialAccounts  SocialAccount[]   // Relation to SocialAccount
 }
+
+model SocialAccount {
+  id              Int               @id @default(autoincrement())
+  provider        String            // e.g., "google", "facebook"
+  providerAccountId String          // The unique ID provided by the social login provider (e.g., Google ID, Facebook ID)
+  user            User              @relation(fields: [userId], references: [id])
+  userId          Int               // Links back to the User model
+}
+
 
 model VendorProfile {
   id          Int           @id @default(autoincrement())
