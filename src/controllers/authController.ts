@@ -1,10 +1,10 @@
 import { Request, Response } from 'express';
+import prisma from '../prisma';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import prisma from '../prisma';
 
 // Register a new user
-export const registerUser = async (req: Request, res: Response) => {
+export const registerUser = async (req: Request, res: Response): Promise<void> => {
   const { email, password } = req.body;
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -22,13 +22,22 @@ export const registerUser = async (req: Request, res: Response) => {
 };
 
 // Login user
-export const loginUser = async (req: Request, res: Response) => {
+export const loginUser = async (req: Request, res: Response): Promise<void> => {
   const { email, password } = req.body;
   try {
     const user = await prisma.user.findUnique({ where: { email } });
-    if (!user || !(await bcrypt.compare(password, user.password))) {
-      return res.status(401).json({ error: 'Invalid credentials' });
+    
+    if (!user || !user.password) {
+      res.status(401).json({ error: 'Invalid credentials' });
+      return;
     }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      res.status(401).json({ error: 'Invalid credentials' });
+      return;
+    }
+
     const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET as string, { expiresIn: '1d' });
     res.json({ token, user });
   } catch (error) {

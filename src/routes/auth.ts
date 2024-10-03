@@ -3,8 +3,12 @@ import { registerUser, loginUser, googleAuth, facebookAuth } from '../controller
 
 const router = Router();
 
+// Register a new user
 router.post('/register', registerUser);
-//router.post('/login', loginUser);
+
+// Login a user
+router.post('/login', loginUser);
+
 router.get('/google', googleAuth);
 router.get('/facebook', facebookAuth);
 
