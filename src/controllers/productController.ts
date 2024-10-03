@@ -2,8 +2,8 @@ import { Request, Response } from 'express';
 import prisma from '../prisma';
 
 // Create a new product
-export const createProduct = async (req: Request, res: Response) => {
-  const { name, stock, price, vendorId, images } = req.body;
+export const createProduct = async (req: Request, res: Response): Promise<void> => {
+  const { name, stock, price, vendorId, categoryId, images } = req.body;
   try {
     const product = await prisma.product.create({
       data: {
@@ -11,6 +11,7 @@ export const createProduct = async (req: Request, res: Response) => {
         stock,
         price,
         vendor: { connect: { id: vendorId } },
+        category: { connect: { id: categoryId } }, // Ensure categoryId is passed and connected
         images: {
           create: images.map((imgUrl: string) => ({ imageUrl: imgUrl })),
         },
@@ -21,6 +22,7 @@ export const createProduct = async (req: Request, res: Response) => {
     res.status(500).json({ error: 'Product creation failed' });
   }
 };
+
 
 // Get all products
 export const getAllProducts = async (req: Request, res: Response) => {
