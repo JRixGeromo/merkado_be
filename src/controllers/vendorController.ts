@@ -6,16 +6,28 @@ export const createVendor = async (req: Request, res: Response): Promise<void> =
   const { userId, location } = req.body;
 
   try {
+    // Check if the user already has a vendor profile
+    const existingVendor = await prisma.vendorProfile.findUnique({
+      where: { userId: userId },
+    });
+
+    if (existingVendor) {
+      res.status(400).json({ error: 'This user already has a vendor profile' });
+      return;
+    }
+
+    // Proceed with vendor creation
     const vendor = await prisma.vendorProfile.create({
       data: {
-        user: { connect: { id: userId } },  // Assuming you have a user associated with a vendor
+        user: { connect: { id: userId } },  // Connect the user with the vendor profile
         location,
       },
     });
+
     res.status(201).json(vendor);
   } catch (error) {
     console.error('Error creating vendor:', error);
-    res.status(500).json({ error: 'Failed to create vendor' });
+    res.status(500).json({ error: 'Failed to create vendor', details: error });
   }
 };
 
