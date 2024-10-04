@@ -16,7 +16,17 @@ export const createProduct = async (req: Request, res: Response): Promise<void> 
       return;
     }
 
-    // Proceed with product creation
+    // Check if unit exists (optional, for validation purposes)
+    const unit = await prisma.unitOfMeasure.findUnique({
+      where: { id: unitId },  // Ensure unitId is passed correctly
+    });
+
+    if (!unit) {
+      res.status(404).json({ error: 'Unit of Measure not found' });
+      return;
+    }
+
+    // Proceed with product creation if vendor and unit exist
     const product = await prisma.product.create({
       data: {
         name,
@@ -24,7 +34,7 @@ export const createProduct = async (req: Request, res: Response): Promise<void> 
         price,
         vendor: { connect: { id: vendorId } },
         category: { connect: { id: categoryId } },
-        unit: { connect: { id: unitId } }, // Ensure unit is connected
+        unit: { connect: { id: unitId } },  // Connect the unitId here
         images: images ? {
           create: images.map((imgUrl: string) => ({ imageUrl: imgUrl })),
         } : undefined,
@@ -37,6 +47,7 @@ export const createProduct = async (req: Request, res: Response): Promise<void> 
     res.status(500).json({ error: 'Product creation failed', details: error });
   }
 };
+
 
 // Get all products
 export const getAllProducts = async (req: Request, res: Response) => {
