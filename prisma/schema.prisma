@@ -30,7 +30,6 @@ model SocialAccount {
   userId          Int               // Links back to the User model
 }
 
-
 model VendorProfile {
   id          Int           @id @default(autoincrement())
   location    String?       // For Google Maps location
@@ -50,6 +49,8 @@ model Product {
   categoryId  Int
   vendor      VendorProfile   @relation("VendorProducts", fields: [vendorId], references: [id])
   vendorId    Int
+  unit        UnitOfMeasure   @relation(fields: [unitId], references: [id])
+  unitId      Int
   orders      Order[]
 }
 
@@ -64,6 +65,12 @@ model ProductCategory {
   id          Int       @id @default(autoincrement())
   name        String
   products    Product[]  // Add this reverse relation to the Product model
+}
+
+model UnitOfMeasure {
+  id          Int       @id @default(autoincrement())
+  name        String    @unique  // e.g., "sack", "serve", "bundle"
+  products    Product[] // Relation to products using this unit
 }
 
 model Order {

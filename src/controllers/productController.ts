@@ -1,8 +1,9 @@
 import { Request, Response } from 'express';
 import prisma from '../prisma';
 
+// Create a new product
 export const createProduct = async (req: Request, res: Response): Promise<void> => {
-  const { name, stock, price, vendorId, categoryId, images } = req.body;
+  const { name, stock, price, vendorId, categoryId, unitId, images } = req.body;
 
   try {
     // Check if vendor exists
@@ -12,10 +13,10 @@ export const createProduct = async (req: Request, res: Response): Promise<void> 
 
     if (!vendor) {
       res.status(404).json({ error: 'Vendor not found' });
-      return;  // Return after sending the response to prevent further execution
+      return;
     }
 
-    // Proceed with product creation if vendor exists
+    // Proceed with product creation
     const product = await prisma.product.create({
       data: {
         name,
@@ -23,25 +24,25 @@ export const createProduct = async (req: Request, res: Response): Promise<void> 
         price,
         vendor: { connect: { id: vendorId } },
         category: { connect: { id: categoryId } },
-        images: {
+        unit: { connect: { id: unitId } }, // Ensure unit is connected
+        images: images ? {
           create: images.map((imgUrl: string) => ({ imageUrl: imgUrl })),
-        },
+        } : undefined,
       },
     });
 
-    res.json(product);  // Send response without returning it
+    res.json(product);
   } catch (error) {
     console.error("Product creation failed:", error);
     res.status(500).json({ error: 'Product creation failed', details: error });
   }
 };
 
-
 // Get all products
 export const getAllProducts = async (req: Request, res: Response) => {
   try {
     const products = await prisma.product.findMany({
-      include: { images: true },
+      include: { images: true, unit: true },  // Include unit in the response
     });
     res.json(products);
   } catch (error) {
@@ -55,22 +56,28 @@ export const getProductById = async (req: Request, res: Response) => {
   try {
     const product = await prisma.product.findUnique({
       where: { id: parseInt(id) },
-      include: { images: true },
+      include: { images: true, unit: true },  // Include unit in the response
     });
+    
+    if (!product) {
+      res.status(404).json({ error: 'Product not found' });
+      return;
+    }
+
     res.json(product);
   } catch (error) {
-    res.status(404).json({ error: 'Product not found' });
+    res.status(500).json({ error: 'Product not found' });
   }
 };
 
 // Update a product
 export const updateProduct = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { name, stock, price } = req.body;
+  const { name, stock, price, unitId } = req.body;
   try {
     const updatedProduct = await prisma.product.update({
       where: { id: parseInt(id) },
-      data: { name, stock, price },
+      data: { name, stock, price, unit: { connect: { id: unitId } } },  // Connect unit if provided
     });
     res.json(updatedProduct);
   } catch (error) {
