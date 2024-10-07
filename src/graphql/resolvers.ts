@@ -208,5 +208,26 @@ export const resolvers = {
 
       }
     },
+
+    addReaction: async (_: any, args: { productId: number, type: 'LIKE' | 'DISLIKE' }, { prisma, user }: Context) => {
+    return await prisma.reaction.create({
+      data: {
+        type: args.type,
+        product: { connect: { id: args.productId } },
+        user: { connect: { id: user.id } },
+      },
+    });
+  },
+
+  removeReaction: async (_: any, args: { productId: number }, { prisma, user }: Context) => {
+    const result = await prisma.reaction.deleteMany({
+      where: {
+        productId: args.productId,
+        userId: user.id,
+      },
+    });
+
+    return result.count > 0;
+  },
   },
 };

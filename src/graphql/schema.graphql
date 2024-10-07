@@ -11,8 +11,23 @@ type Product {
   name: String!
   price: Float!
   description: String
+  longDescription: String  # Detailed description of the product
   imageUrl: String
   vendor: VendorProfile!  # Relation to vendor
+  reactions: [Reaction!]  # List of reactions (likes/dislikes)
+}
+
+# Define your Reaction type
+type Reaction {
+  id: ID!
+  type: ReactionType!
+  product: Product!
+  user: User!
+}
+
+enum ReactionType {
+  LIKE
+  DISLIKE
 }
 
 # Define your VendorProfile type
@@ -34,10 +49,9 @@ type Order {
 type User {
   id: ID!
   email: String!
-  vendorProfile: VendorProfile # Made this optional
+  vendorProfile: VendorProfile
 }
 
-# Define Wish type
 type Wish {
   id: ID!
   product: Product!
@@ -45,7 +59,6 @@ type Wish {
   createdAt: String!
 }
 
-# Define Favorite type
 type Favorite {
   id: ID!
   product: Product!
@@ -55,11 +68,18 @@ type Favorite {
 
 # Mutation type for creating, updating, and deleting products
 type Mutation {
-  createProduct(name: String!, price: Float!, categoryId: ID!, vendorId: ID!, unitId: ID!): Product
-  updateProduct(id: ID!, name: String, price: Float): Product
+  createProduct(
+    name: String!
+    price: Float!
+    categoryId: ID!
+    vendorId: ID!
+    unitId: ID!
+    longDescription: String
+  ): Product
+  updateProduct(id: ID!, name: String, price: Float, longDescription: String): Product
   deleteProduct(id: ID!): Boolean
-
-  # Mutations for managing wishlist and favorites
+  addReaction(productId: ID!, type: ReactionType!): Reaction
+  removeReaction(productId: ID!): Boolean
   addWish(productId: ID!): Wish
   removeWish(productId: ID!): Boolean
   addFavorite(productId: ID!): Favorite
