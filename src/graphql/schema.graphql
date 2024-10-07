@@ -1,0 +1,21 @@
+type Query {
+  products: [Product] @cacheControl(maxAge: 60)  # Cache the product query for 60 seconds
+  orders: [Order] @cacheControl(maxAge: 30)      # Cache the order query for 30 seconds
+}
+
+# Define your Product type
+type Product {
+  id: ID!
+  name: String!
+  price: Float!
+  description: String
+  imageUrl: String
+}
+
+# Define your Order type
+type Order {
+  id: ID!
+  product: Product!
+  quantity: Int!
+  totalAmount: Float!
+}
