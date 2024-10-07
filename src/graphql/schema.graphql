@@ -1,6 +1,8 @@
 type Query {
   products: [Product] @cacheControl(maxAge: 60)  # Cache the product query for 60 seconds
   orders: [Order] @cacheControl(maxAge: 30)      # Cache the order query for 30 seconds
+  productById(id: ID!): Product                   # Query a product by ID
+  users: [User!]                                   # Query users
 }
 
 # Define your Product type
@@ -10,6 +12,14 @@ type Product {
   price: Float!
   description: String
   imageUrl: String
+  vendor: VendorProfile!  # Relation to vendor
+}
+
+# Define your VendorProfile type
+type VendorProfile {
+  id: ID!
+  location: String
+  user: User!
 }
 
 # Define your Order type
@@ -18,4 +28,18 @@ type Order {
   product: Product!
   quantity: Int!
   totalAmount: Float!
+}
+
+# Define your User type
+type User {
+  id: ID!
+  email: String!
+  vendorProfile: VendorProfile
+}
+
+# Mutation type for creating, updating, and deleting products
+type Mutation {
+  createProduct(name: String!, price: Float!, categoryId: ID!, vendorId: ID!, unitId: ID!): Product
+  updateProduct(id: ID!, name: String, price: Float): Product
+  deleteProduct(id: ID!): Boolean
 }

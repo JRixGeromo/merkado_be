@@ -12,45 +12,32 @@ const CACHE_TTL = 3600; // 1 hour in seconds
 export const resolvers = {
   Query: {
     users: async (_: any, __: any, { prisma }: Context) => {
-      try {
-        return await prisma.user.findMany({
-          include: { vendorProfile: true },  // Include vendorProfile
-        });
-      } catch (error) {
-        throw new Error('Failed to fetch users');
-      }
+      return prisma.user.findMany({
+        include: { vendorProfile: true },
+      });
     },
 
-    // Add caching to the products resolver
+    // Cache the products query
     products: async (_: any, __: any, { prisma }: Context) => {
-      const cacheKey = `${PRODUCT_CACHE_KEY_PREFIX}all`;  // Cache key for all products
+      const cacheKey = `${PRODUCT_CACHE_KEY_PREFIX}all`;
+
       return getOrSetCache(cacheKey, async () => {
-        try {
-          const products = await prisma.product.findMany({
-            include: { vendor: true },  // Include vendor directly in the query
-          });
-          return products;
-        } catch (error) {
-          throw new Error('Failed to fetch products');
-        }
-      }, CACHE_TTL);  // 1 hour TTL for cache
+        return prisma.product.findMany({
+          include: { vendor: true },
+        });
+      }, CACHE_TTL);
     },
 
-    // Add caching for fetching a product by ID if needed
-    productById: async (_: any, { id }: { id: string }, { prisma }: Context) => {
-      const cacheKey = `${PRODUCT_CACHE_KEY_PREFIX}${id}`;  // Cache key for individual product
+    // Cache individual product by ID query
+    productById: async (_: any, args: { id: string }, { prisma }: Context) => {
+      const cacheKey = `${PRODUCT_CACHE_KEY_PREFIX}${args.id}`;
+
       return getOrSetCache(cacheKey, async () => {
-        try {
-          const product = await prisma.product.findUnique({
-            where: { id: parseInt(id, 10) },
-            include: { vendor: true },  // Include vendor in the query
-          });
-          if (!product) throw new Error(`Product with ID ${id} not found`);
-          return product;
-        } catch (error) {
-          throw new Error('Failed to fetch product');
-        }
-      }, CACHE_TTL);  // Cache this product for 1 hour
+        return prisma.product.findUnique({
+          where: { id: Number(args.id) }, // Assuming `id` is numeric
+          include: { vendor: true },
+        });
+      }, CACHE_TTL);
     },
   },
 
