@@ -8,8 +8,12 @@ export const createOrder = async (req: Request, res: Response) => {
     const order = await prisma.order.create({
       data: {
         customer: { connect: { id: userId } },
-        products: {
-          connect: products.map((productId: number) => ({ id: productId })),
+        orderItems: {
+          create: products.map((product: { productId: number, quantity: number, priceAtTime: number }) => ({
+            product: { connect: { id: product.productId } },
+            quantity: product.quantity,
+            priceAtTime: product.priceAtTime, // Price at time of purchase
+          })),
         },
         totalAmount,
       },
@@ -26,7 +30,7 @@ export const getOrderById = async (req: Request, res: Response) => {
   try {
     const order = await prisma.order.findUnique({
       where: { id: parseInt(id) },
-      include: { products: true },
+      include: { orderItems: { include: { product: true } } }, // Ensure you include order items with products
     });
     res.json(order);
   } catch (error) {

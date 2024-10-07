@@ -77,13 +77,13 @@ model Favorite {
 }
 
 model Reaction {
-  id        Int          @id @default(autoincrement())
-  type      ReactionType // Enum for LIKE or DISLIKE
-  product   Product      @relation(fields: [productId], references: [id])
+  id        Int      @id @default(autoincrement())
+  type      ReactionType
+  product   Product  @relation(fields: [productId], references: [id])
   productId Int
-  user      User         @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
   userId    Int
-  createdAt DateTime     @default(now())
+  createdAt DateTime @default(now())
 }
 
 enum ReactionType {

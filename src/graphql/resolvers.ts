@@ -137,39 +137,20 @@ export const resolvers = {
 
     // Wish and Favorite Mutations
     addWish: async (_: any, args: { productId: number }, { prisma, user }: Context) => {
-      try {
-        return await prisma.wish.create({
-          data: {
-            product: { connect: { id: args.productId } },
-            user: { connect: { id: user.id } },
-          },
-        });
-      } catch (error) {
-        if (error instanceof Error) {
-          throw new Error(`Failed to add wish: ${error.message}`);
-        } else {
-          throw new Error('Failed to add wish due to an unknown error.');
-        }
-      }
+      return await prisma.wish.create({
+        data: {
+          product: { connect: { id: args.productId } },
+          user: { connect: { id: user.id } },
+        },
+      });
     },
-
     removeWish: async (_: any, args: { productId: number }, { prisma, user }: Context) => {
-      try {
-        const result = await prisma.wish.deleteMany({
-          where: {
-            productId: args.productId,
-            userId: user.id,
-          },
-        });
-
-        return result.count > 0;
-      } catch (error) {
-        if (error instanceof Error) {
-          throw new Error(`Failed to remove wish: ${error.message}`);
-        } else {
-          throw new Error('Failed to remove wish due to an unknown error.');
-        }
-      }
+      return await prisma.wish.deleteMany({
+        where: {
+          productId: args.productId,
+          userId: user.id,
+        },
+      });
     },
 
     addFavorite: async (_: any, args: { productId: number }, { prisma, user }: Context) => {
@@ -210,24 +191,24 @@ export const resolvers = {
     },
 
     addReaction: async (_: any, args: { productId: number, type: 'LIKE' | 'DISLIKE' }, { prisma, user }: Context) => {
-    return await prisma.reaction.create({
-      data: {
-        type: args.type,
-        product: { connect: { id: args.productId } },
-        user: { connect: { id: user.id } },
-      },
-    });
-  },
+      return await prisma.reaction.create({
+        data: {
+          type: args.type,
+          product: { connect: { id: args.productId } },
+          user: { connect: { id: user.id } },
+        },
+      });
+    },
 
-  removeReaction: async (_: any, args: { productId: number }, { prisma, user }: Context) => {
-    const result = await prisma.reaction.deleteMany({
-      where: {
-        productId: args.productId,
-        userId: user.id,
-      },
-    });
+    removeReaction: async (_: any, args: { productId: number }, { prisma, user }: Context) => {
+      const result = await prisma.reaction.deleteMany({
+        where: {
+          productId: args.productId,
+          userId: user.id,
+        },
+      });
 
-    return result.count > 0;
-  },
+      return result.count > 0;
+    },
   },
 };
