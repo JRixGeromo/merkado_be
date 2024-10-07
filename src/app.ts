@@ -5,11 +5,13 @@ import dotenv from 'dotenv';
 import prisma from './prisma';
 import { typeDefs } from './graphql/schema';
 import { resolvers } from './graphql/resolvers';
-import authRoutes from './routes/auth';  
-import productRoutes from './routes/product';  
-import orderRoutes from './routes/order';  
-import vendorRoutes from './routes/vendor';  
-import productCategoryRoutes from './routes/productCategory';  
+import { makeExecutableSchema } from '@graphql-tools/schema';
+import { ApolloServerPluginCacheControl } from '@apollo/server/plugin/cacheControl';  // Cache control plugin
+import authRoutes from './routes/auth';
+import productRoutes from './routes/product';
+import orderRoutes from './routes/order';
+import vendorRoutes from './routes/vendor';
+import productCategoryRoutes from './routes/productCategory';
 import userRoutes from './routes/user';
 import unitOfMeasureRoutes from './routes/unitOfMeasure';
 import addressRoutes from './routes/address';
@@ -23,13 +25,21 @@ dotenv.config();
 const app = express();
 app.use(express.json());
 
-// Initialize Apollo Server
-const server = new ApolloServer({
+// Create an executable schema
+const schema = makeExecutableSchema({
   typeDefs,
   resolvers,
+});
+
+// Initialize Apollo Server with Redis caching and cache control plugin
+const server = new ApolloServer({
+  schema,  // Use the schema
   cache: new RedisCache({
-    client: redisClient,  // Use the Redis client for caching
+    client: redisClient,  // Use Redis client for caching
   }),
+  plugins: [
+    ApolloServerPluginCacheControl({ defaultMaxAge: 5 }),  // Enable cache control
+  ],
 });
 
 async function startServer() {
@@ -39,7 +49,7 @@ async function startServer() {
   app.use(
     '/graphql',
     expressMiddleware(server, {
-      context: async () => ({ prisma }),  // This is where Prisma is added as context
+      context: async () => ({ prisma }),  // Pass Prisma to resolvers
     })
   );
 
@@ -54,7 +64,7 @@ async function startServer() {
   app.use('/api/addresses', addressRoutes);
   app.use('/api/chats', chatRoutes);
   app.use('/api/payments', paymentRoutes);
-  
+
   const PORT = process.env.PORT || 5000;
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);

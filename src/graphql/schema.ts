@@ -1,4 +1,3 @@
-// src/graphql/schema.ts
 import { gql } from 'graphql-tag';
 
 export const typeDefs = gql`
@@ -22,7 +21,7 @@ export const typeDefs = gql`
   }
 
   type Query {
-    users: [User!] @cacheControl(maxAge: 60)  # Cache users query for 60 seconds
-    products: [Product!] @cacheControl(maxAge: 120)  # Cache products query for 120 seconds
+    users: [User!]  # Removed @cacheControl
+    products: [Product!]  # Removed @cacheControl
   }
 `;
