@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import prisma from '../prisma';
+import { VendorProfile } from '@prisma/client';
 
 interface Context {
   prisma: PrismaClient;
@@ -27,16 +27,27 @@ export const resolvers = {
     },
   },
   User: {
-    vendorProfile: async (parent: any, _: any, { prisma }: Context) => {
+    vendorProfile: async (parent: any, _: any, { prisma }: Context): Promise<VendorProfile | null> => {
       try {
-        return await prisma.vendorProfile.findUnique({
-          where: { id: parent.vendorProfileId },
+        const profile = await prisma.vendorProfile.findUnique({
+          where: {
+            userId: parent.id, // Ensure you are querying by `userId` (the user's ID)
+          },
         });
+  
+        if (!profile) {
+          console.log(`No vendor profile found for user ${parent.id}`);
+          return null;
+        }
+  
+        return profile;
       } catch (error) {
-        throw new Error('Failed to fetch vendor profile');
+        console.error(`Error fetching vendor profile for user ${parent.id}:`, error);
+        throw new Error('Failed to fetch vendor profile'); // Throw error instead of returning null if a real issue occurs
       }
     },
   },
+  
   Product: {
     vendor: async (parent: any, _: any, { prisma }: Context) => {
       try {
