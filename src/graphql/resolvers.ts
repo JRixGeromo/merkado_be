@@ -135,22 +135,26 @@ export const resolvers = {
       }
     },
 
-    // Wish and Favorite Mutations
-    addWish: async (_: any, args: { productId: number }, { prisma, user }: Context) => {
-      return await prisma.wish.create({
+    
+    addReaction: async (_: any, args: { productId: number, type: 'LIKE' | 'DISLIKE' }, { prisma, user }: Context) => {
+      return await prisma.reaction.create({
         data: {
+          type: args.type,
           product: { connect: { id: args.productId } },
           user: { connect: { id: user.id } },
         },
       });
     },
-    removeWish: async (_: any, args: { productId: number }, { prisma, user }: Context) => {
-      return await prisma.wish.deleteMany({
+
+    removeReaction: async (_: any, args: { productId: number }, { prisma, user }: Context) => {
+      const result = await prisma.reaction.deleteMany({
         where: {
           productId: args.productId,
           userId: user.id,
         },
       });
+
+      return result.count > 0;
     },
 
     addFavorite: async (_: any, args: { productId: number }, { prisma, user }: Context) => {
@@ -189,26 +193,23 @@ export const resolvers = {
 
       }
     },
-
-    addReaction: async (_: any, args: { productId: number, type: 'LIKE' | 'DISLIKE' }, { prisma, user }: Context) => {
-      return await prisma.reaction.create({
+    // Wish and Favorite Mutations
+    addWish: async (_: any, args: { productId: number }, { prisma, user }: Context) => {
+      return await prisma.wish.create({
         data: {
-          type: args.type,
           product: { connect: { id: args.productId } },
           user: { connect: { id: user.id } },
         },
       });
     },
-
-    removeReaction: async (_: any, args: { productId: number }, { prisma, user }: Context) => {
-      const result = await prisma.reaction.deleteMany({
+    removeWish: async (_: any, args: { productId: number }, { prisma, user }: Context) => {
+      return await prisma.wish.deleteMany({
         where: {
           productId: args.productId,
           userId: user.id,
         },
       });
-
-      return result.count > 0;
     },
+
   },
 };

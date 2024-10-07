@@ -80,8 +80,8 @@ type Mutation {
   deleteProduct(id: ID!): Boolean
   addReaction(productId: ID!, type: ReactionType!): Reaction
   removeReaction(productId: ID!): Boolean
-  addWish(productId: ID!): Wish
-  removeWish(productId: ID!): Boolean
   addFavorite(productId: ID!): Favorite
   removeFavorite(productId: ID!): Boolean
+  addWish(productId: ID!): Wish
+  removeWish(productId: ID!): Boolean
 }
