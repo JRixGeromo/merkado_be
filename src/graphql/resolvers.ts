@@ -4,6 +4,7 @@ import { getOrSetCache, invalidateCache } from '../services/cacheService';  // I
 
 interface Context {
   prisma: PrismaClient;
+  user: { id: number }; // Assuming `user` contains at least `id`
 }
 
 const PRODUCT_CACHE_KEY_PREFIX = 'product_'; // Prefix for product cache keys
@@ -77,52 +78,135 @@ export const resolvers = {
 
   Mutation: {
     createProduct: async (_: any, args: any, { prisma }: Context) => {
-      const newProduct = await prisma.product.create({
-        data: {
-          name: args.name,           // Ensure name is provided
-          price: args.price,         // Ensure price is provided
-          category: {
-            connect: { id: args.categoryId },  // Connect existing category by ID
+      try {
+        const newProduct = await prisma.product.create({
+          data: {
+            name: args.name,
+            price: args.price,
+            category: { connect: { id: args.categoryId } },
+            vendor: { connect: { id: args.vendorId } },
+            unit: { connect: { id: args.unitId } },
           },
-          vendor: {
-            connect: { id: args.vendorId },    // Connect existing vendor by ID
-          },
-          unit: {
-            connect: { id: args.unitId },      // Connect existing unit by ID
-          },
-          // Add more fields here if needed, such as description, images, etc.
-        },
-      });
-  
-      // Invalidate cache for all products since new data is added
-      invalidateCache(`${PRODUCT_CACHE_KEY_PREFIX}all`);
-  
-      return newProduct;
+        });
+
+        invalidateCache(`${PRODUCT_CACHE_KEY_PREFIX}all`);
+        return newProduct;
+      } catch (error) {
+        if (error instanceof Error) {
+          throw new Error(`Failed to create product: ${error.message}`);
+        } else {
+          throw new Error('Failed to create product due to an unknown error.');
+        }
+      }
     },
 
     updateProduct: async (_: any, { id, ...args }: any, { prisma }: Context) => {
-      const updatedProduct = await prisma.product.update({
-        where: { id: parseInt(id, 10) },
-        data: args,
-      });
+      try {
+        const updatedProduct = await prisma.product.update({
+          where: { id: parseInt(id, 10) },
+          data: args,
+        });
 
-      // Invalidate cache for this product and the products list
-      invalidateCache(`${PRODUCT_CACHE_KEY_PREFIX}${id}`);
-      invalidateCache(`${PRODUCT_CACHE_KEY_PREFIX}all`);
-
-      return updatedProduct;
+        invalidateCache(`${PRODUCT_CACHE_KEY_PREFIX}${id}`);
+        invalidateCache(`${PRODUCT_CACHE_KEY_PREFIX}all`);
+        return updatedProduct;
+      } catch (error) {
+        if (error instanceof Error) {
+          throw new Error(`Failed to update product: ${error.message}`);
+        } else {
+          throw new Error('Failed to update product due to an unknown error.');
+        }
+      }
     },
 
     deleteProduct: async (_: any, { id }: { id: string }, { prisma }: Context) => {
-      await prisma.product.delete({
-        where: { id: parseInt(id, 10) },
-      });
+      try {
+        await prisma.product.delete({ where: { id: parseInt(id, 10) } });
+        invalidateCache(`${PRODUCT_CACHE_KEY_PREFIX}${id}`);
+        invalidateCache(`${PRODUCT_CACHE_KEY_PREFIX}all`);
+        return true;
+      } catch (error) {
+        if (error instanceof Error) {
+          throw new Error(`Failed to delete product: ${error.message}`);
+        } else {
+          throw new Error('Failed to delete product due to an unknown error.');
+        }
+        
+      }
+    },
 
-      // Invalidate cache for this product and the products list
-      invalidateCache(`${PRODUCT_CACHE_KEY_PREFIX}${id}`);
-      invalidateCache(`${PRODUCT_CACHE_KEY_PREFIX}all`);
+    // Wish and Favorite Mutations
+    addWish: async (_: any, args: { productId: number }, { prisma, user }: Context) => {
+      try {
+        return await prisma.wish.create({
+          data: {
+            product: { connect: { id: args.productId } },
+            user: { connect: { id: user.id } },
+          },
+        });
+      } catch (error) {
+        if (error instanceof Error) {
+          throw new Error(`Failed to add wish: ${error.message}`);
+        } else {
+          throw new Error('Failed to add wish due to an unknown error.');
+        }
+      }
+    },
 
-      return true;
+    removeWish: async (_: any, args: { productId: number }, { prisma, user }: Context) => {
+      try {
+        const result = await prisma.wish.deleteMany({
+          where: {
+            productId: args.productId,
+            userId: user.id,
+          },
+        });
+
+        return result.count > 0;
+      } catch (error) {
+        if (error instanceof Error) {
+          throw new Error(`Failed to remove wish: ${error.message}`);
+        } else {
+          throw new Error('Failed to remove wish due to an unknown error.');
+        }
+      }
+    },
+
+    addFavorite: async (_: any, args: { productId: number }, { prisma, user }: Context) => {
+      try {
+        return await prisma.favorite.create({
+          data: {
+            product: { connect: { id: args.productId } },
+            user: { connect: { id: user.id } },
+          },
+        });
+      } catch (error) {
+        if (error instanceof Error) {
+          throw new Error(`Failed to add favorite: ${error.message}`);
+        } else {
+          throw new Error('Failed to add favorite due to an unknown error.');
+        }
+      }
+    },
+
+    removeFavorite: async (_: any, args: { productId: number }, { prisma, user }: Context) => {
+      try {
+        const result = await prisma.favorite.deleteMany({
+          where: {
+            productId: args.productId,
+            userId: user.id,
+          },
+        });
+
+        return result.count > 0;
+      } catch (error) {
+        if (error instanceof Error) {
+          throw new Error(`Failed to remove favorite: ${error.message}`);
+        } else {
+          throw new Error('Failed to remove favorite due to an unknown error.');
+        }
+
+      }
     },
   },
 };

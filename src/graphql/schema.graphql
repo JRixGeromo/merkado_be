@@ -34,7 +34,23 @@ type Order {
 type User {
   id: ID!
   email: String!
-  vendorProfile: VendorProfile
+  vendorProfile: VendorProfile # Made this optional
+}
+
+# Define Wish type
+type Wish {
+  id: ID!
+  product: Product!
+  user: User!
+  createdAt: String!
+}
+
+# Define Favorite type
+type Favorite {
+  id: ID!
+  product: Product!
+  user: User!
+  createdAt: String!
 }
 
 # Mutation type for creating, updating, and deleting products
@@ -42,4 +58,10 @@ type Mutation {
   createProduct(name: String!, price: Float!, categoryId: ID!, vendorId: ID!, unitId: ID!): Product
   updateProduct(id: ID!, name: String, price: Float): Product
   deleteProduct(id: ID!): Boolean
+
+  # Mutations for managing wishlist and favorites
+  addWish(productId: ID!): Wish
+  removeWish(productId: ID!): Boolean
+  addFavorite(productId: ID!): Favorite
+  removeFavorite(productId: ID!): Boolean
 }
