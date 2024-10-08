@@ -11,6 +11,7 @@ model User {
   id               Int             @id @default(autoincrement())
   email            String?         @unique
   password         String?
+  profileImageUrl  String?         // URL for profile image
   vendorProfile    VendorProfile?
   orders           Order[]
   addresses        Address[]
@@ -31,11 +32,19 @@ model SocialAccount {
 }
 
 model VendorProfile {
-  id       Int       @id @default(autoincrement())
-  location String? // For Google Maps location
-  products Product[] @relation("VendorProducts")
-  user     User      @relation(fields: [userId], references: [id])
-  userId   Int       @unique
+  id              Int       @id @default(autoincrement())
+  businessName    String    @default("Your Business")
+  businessType    String    @default("General")
+  businessPhone   String    @default("N/A")
+  businessEmail   String?
+  businessLicense String?
+  taxId           String?
+  website         String?
+  location        String?
+  products        Product[] @relation("VendorProducts")
+  user            User      @relation(fields: [userId], references: [id])
+  userId          Int       @unique
+  marketingCampaigns MarketingCampaign[]
 }
 
 model Product {
@@ -44,7 +53,7 @@ model Product {
   stock           Int             @default(0)
   price           Float
   salePrice       Float?
-  longDescription String? // Add longDescription for detailed product info
+  longDescription String? // Detailed product info
   images          ProductImage[] // Relation to ProductImage model
   category        ProductCategory @relation(fields: [categoryId], references: [id])
   categoryId      Int
@@ -99,6 +108,8 @@ model Order {
   userId      Int
   payment     Payment? // Add this to make the relation bidirectional
   orderItems  OrderItem[] // Relation to order items
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model OrderItem {
@@ -133,6 +144,8 @@ model UnitOfMeasure {
 model Address {
   id         Int    @id @default(autoincrement())
   postalCode String
+  latitude   Float?  // Latitude for Google Maps
+  longitude  Float?  // Longitude for Google Maps
   user       User   @relation(fields: [userId], references: [id])
   userId     Int
 }
@@ -145,6 +158,14 @@ model Chat {
   recipient   User     @relation("ReceivedMessages", fields: [recipientId], references: [id])
   recipientId Int
   sentAt      DateTime @default(now())
+  attachments ChatAttachment[] // Relation to ChatAttachment model
+}
+
+model ChatAttachment {
+  id      Int    @id @default(autoincrement())
+  fileUrl String // URL to file (images, documents, etc.)
+  chat    Chat   @relation(fields: [chatId], references: [id])
+  chatId  Int
 }
 
 model Payment {
@@ -153,9 +174,20 @@ model Payment {
   amount        Float
   transactionId String
   order         Order         @relation(fields: [orderId], references: [id])
-  orderId       Int           @unique // Mark orderId as unique for a one-to-one relation
+  orderId       Int           @unique
   status        PaymentStatus @default(PENDING)
   createdAt     DateTime      @default(now())
+}
+
+model MarketingCampaign {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String
+  startDate   DateTime
+  endDate     DateTime
+  discount    Float?   // Percentage or flat discount
+  vendor      VendorProfile @relation(fields: [vendorId], references: [id])
+  vendorId    Int
 }
 
 enum OrderStatus {
@@ -168,6 +200,7 @@ enum PaymentMethod {
   GCASH
   CREDIT_CARD
   PAYPAL
+  BANK_TRANSFER
 }
 
 enum PaymentStatus {

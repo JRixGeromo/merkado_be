@@ -43,11 +43,23 @@ export const resolvers = {
   },
 
   User: {
-    vendorProfile: async (parent: any, _: any, { prisma }: Context): Promise<VendorProfile | null> => {
+    vendorProfile: async (parent: any, _: any, { prisma }: Context) => {
       try {
         const profile = await prisma.vendorProfile.findUnique({
           where: {
-            userId: parent.id, // Ensure you are querying by `userId` (the user's ID)
+            userId: parent.id,
+          },
+          select: {
+            id: true,
+            businessName: true,
+            businessType: true,
+            businessPhone: true,
+            businessEmail: true,
+            businessLicense: true,
+            taxId: true,
+            website: true,
+            location: true,
+            userId: true,
           },
         });
   
@@ -56,14 +68,20 @@ export const resolvers = {
           return null;
         }
   
-        return profile;
+        // Handle nullable values appropriately
+        return {
+          ...profile,
+          businessEmail: profile.businessEmail || "No email provided",
+          businessLicense: profile.businessLicense || "No license provided",
+          website: profile.website || "No website provided",
+        };
       } catch (error) {
         console.error(`Error fetching vendor profile for user ${parent.id}:`, error);
         throw new Error('Failed to fetch vendor profile');
       }
     },
   },
-  
+
   Product: {
     vendor: async (parent: any, _: any, { prisma }: Context) => {
       try {
@@ -131,11 +149,9 @@ export const resolvers = {
         } else {
           throw new Error('Failed to delete product due to an unknown error.');
         }
-        
       }
     },
 
-    
     addReaction: async (_: any, args: { productId: number, type: 'LIKE' | 'DISLIKE' }, { prisma, user }: Context) => {
       return await prisma.reaction.create({
         data: {
@@ -190,9 +206,9 @@ export const resolvers = {
         } else {
           throw new Error('Failed to remove favorite due to an unknown error.');
         }
-
       }
     },
+
     // Wish and Favorite Mutations
     addWish: async (_: any, args: { productId: number }, { prisma, user }: Context) => {
       return await prisma.wish.create({
@@ -202,6 +218,7 @@ export const resolvers = {
         },
       });
     },
+
     removeWish: async (_: any, args: { productId: number }, { prisma, user }: Context) => {
       return await prisma.wish.deleteMany({
         where: {
@@ -211,5 +228,41 @@ export const resolvers = {
       });
     },
 
+    // New Mutation to update Vendor Profile
+    updateVendorProfile: async (_: any, args: { businessName: string, businessType: string, businessPhone: string }, { prisma, user }: Context) => {
+      try {
+        const updatedProfile = await prisma.vendorProfile.update({
+          where: {
+            userId: user.id, // Ensure it updates the profile tied to the logged-in user
+          },
+          data: {
+            businessName: args.businessName,
+            businessType: args.businessType,
+            businessPhone: args.businessPhone,
+          },
+        });
+
+        return updatedProfile;
+      } catch (error) {
+        if (error instanceof Error) {
+          throw new Error(`Failed to update vendor profile: ${error.message}`);
+        } else {
+          throw new Error('Failed to update vendor profile due to an unknown error.');
+        }
+      }
+    },
+
+    // New Mutation to create Vendor Profile (if needed)
+    createVendorProfile: async (_: any, args: { businessName: string, businessType: string, businessPhone: string, location: string }, { prisma, user }: Context) => {
+      return await prisma.vendorProfile.create({
+        data: {
+          user: { connect: { id: user.id } },
+          businessName: args.businessName,
+          businessType: args.businessType,
+          businessPhone: args.businessPhone,
+          location: args.location,
+        },
+      });
+    },
   },
 };

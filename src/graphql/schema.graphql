@@ -1,11 +1,13 @@
+# Define Query type with caching directives
 type Query {
   products: [Product] @cacheControl(maxAge: 60)  # Cache the product query for 60 seconds
   orders: [Order] @cacheControl(maxAge: 30)      # Cache the order query for 30 seconds
   productById(id: ID!): Product                   # Query a product by ID
-  users: [User!]                                   # Query users
+  users: [User!]                                  # Query users
+  vendorProfileByUserId(userId: ID!): VendorProfile # Query vendor profile by user ID
 }
 
-# Define your Product type
+# Define Product type
 type Product {
   id: ID!
   name: String!
@@ -17,7 +19,7 @@ type Product {
   reactions: [Reaction!]  # List of reactions (likes/dislikes)
 }
 
-# Define your Reaction type
+# Define Reaction type
 type Reaction {
   id: ID!
   type: ReactionType!
@@ -25,19 +27,24 @@ type Reaction {
   user: User!
 }
 
+# Define ReactionType enum
 enum ReactionType {
   LIKE
   DISLIKE
 }
 
-# Define your VendorProfile type
+# Define VendorProfile type with additional fields
 type VendorProfile {
   id: ID!
-  location: String
+  businessName: String!     # Name of the business
+  businessType: String!     # Type of business (e.g., retail, wholesale)
+  businessPhone: String!    # Business phone number
+  businessEmail: String     # Business email (optional)
+  location: String          # Google Maps location of the business
   user: User!
 }
 
-# Define your Order type
+# Define Order type
 type Order {
   id: ID!
   product: Product!
@@ -45,13 +52,14 @@ type Order {
   totalAmount: Float!
 }
 
-# Define your User type
+# Define User type
 type User {
   id: ID!
   email: String!
   vendorProfile: VendorProfile
 }
 
+# Define Wish type
 type Wish {
   id: ID!
   product: Product!
@@ -59,6 +67,7 @@ type Wish {
   createdAt: String!
 }
 
+# Define Favorite type
 type Favorite {
   id: ID!
   product: Product!
@@ -66,7 +75,7 @@ type Favorite {
   createdAt: String!
 }
 
-# Mutation type for creating, updating, and deleting products
+# Define Mutation type for creating, updating, and deleting products
 type Mutation {
   createProduct(
     name: String!
@@ -76,12 +85,39 @@ type Mutation {
     unitId: ID!
     longDescription: String
   ): Product
-  updateProduct(id: ID!, name: String, price: Float, longDescription: String): Product
+
+  updateProduct(
+    id: ID!
+    name: String
+    price: Float
+    longDescription: String
+  ): Product
+
   deleteProduct(id: ID!): Boolean
+
+  # Add and remove reactions to a product
   addReaction(productId: ID!, type: ReactionType!): Reaction
   removeReaction(productId: ID!): Boolean
+
+  # Add and remove favorites
   addFavorite(productId: ID!): Favorite
   removeFavorite(productId: ID!): Boolean
+
+  # Add and remove wishes
   addWish(productId: ID!): Wish
   removeWish(productId: ID!): Boolean
+
+  # VendorProfile mutations for updating and creating profiles
+  updateVendorProfile(
+    businessName: String!
+    businessType: String!
+    businessPhone: String!
+  ): VendorProfile
+
+  createVendorProfile(
+    businessName: String!
+    businessType: String!
+    businessPhone: String!
+    location: String
+  ): VendorProfile
 }
