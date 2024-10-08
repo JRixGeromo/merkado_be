@@ -147,37 +147,43 @@ export const resolvers = {
       try {
         // Find the user by email
         const user = await prisma.user.findUnique({ where: { email } });
+        
+        // Check if user exists and password field is valid
         if (!user || !user.password) {
           throw new Error('Invalid credentials');
         }
-
-        // Ensure the password is a string before comparing
-        if (typeof user.password !== 'string') {
-          throw new Error('Invalid credentials');
-        }
-
+    
         // Check if the password matches
         const isPasswordValid = await bcrypt.compare(password, user.password);
         if (!isPasswordValid) {
           throw new Error('Invalid credentials');
         }
-
+    
         // Generate a JWT token
         const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET as string, { expiresIn: '1d' });
-
-        // Return user data and token
+    
+        // Return user data and token, excluding the password
         return {
           token,
           user: {
             ...user,
-            password: undefined, // Exclude password from response
+            password: undefined, // Exclude password from the response
           },
         };
       } catch (error) {
+        // Log the error for server-side debugging but don't expose it to users
         console.error('Login Error:', error);
-        throw new Error('Login failed');
+    
+        // Differentiate between authentication failures and server/database errors
+        if (error.message === 'Invalid credentials') {
+          throw new Error('Invalid credentials');
+        } else {
+          throw new Error('Login failed due to an internal server error');
+        }
       }
     },
+    
+    
 
     createProduct: async (_: any, args: any, { prisma }: Context) => {
       try {
