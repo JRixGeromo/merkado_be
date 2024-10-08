@@ -170,21 +170,22 @@ export const resolvers = {
             password: undefined, // Exclude password from the response
           },
         };
-      } catch (error) {
-        // Log the error for server-side debugging but don't expose it to users
+      } catch (error: unknown) {
         console.error('Login Error:', error);
     
-        // Differentiate between authentication failures and server/database errors
-        if (error.message === 'Invalid credentials') {
-          throw new Error('Invalid credentials');
-        } else {
-          throw new Error('Login failed due to an internal server error');
+        // Type narrowing to ensure 'error' is an instance of 'Error'
+        if (error instanceof Error) {
+          if (error.message === 'Invalid credentials') {
+            throw new Error('Invalid credentials');
+          } else {
+            throw new Error('Login failed due to an internal server error');
+          }
         }
+        // Fallback for unexpected non-Error exceptions
+        throw new Error('An unexpected error occurred');
       }
     },
     
-    
-
     createProduct: async (_: any, args: any, { prisma }: Context) => {
       try {
         const newProduct = await prisma.product.create({
