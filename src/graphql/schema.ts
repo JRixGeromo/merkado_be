@@ -7,6 +7,11 @@ export const typeDefs = gql`
     vendorProfile: VendorProfile
   }
 
+  type AuthPayload {
+    token: String!
+    user: User!
+  }
+
   type VendorProfile {
     id: ID!
     businessName: String!   # New field for the business name
@@ -61,6 +66,9 @@ export const typeDefs = gql`
   }
 
   type Mutation {
+    registerUser(email: String!, password: String!): AuthPayload!
+    loginUser(email: String!, password: String!): AuthPayload!  
+    
     # Product mutations
     createProduct(name: String!, price: Float!, categoryId: Int!, vendorId: Int!, unitId: Int!): Product
     updateProduct(id: Int!, name: String, price: Float): Product

@@ -52,6 +52,11 @@ type Order {
   totalAmount: Float!
 }
 
+type AuthPayload {
+  token: String!
+  user: User!
+}
+
 # Define User type
 type User {
   id: ID!
@@ -77,6 +82,9 @@ type Favorite {
 
 # Define Mutation type for creating, updating, and deleting products
 type Mutation {
+  registerUser(email: String!, password: String!): AuthPayload!
+  loginUser(email: String!, password: String!): AuthPayload!
+
   createProduct(
     name: String!
     price: Float!

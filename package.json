@@ -42,8 +42,7 @@
     "ts-node": "^10.9.2",
     "typescript": "^5.6.2"
   },
-    "prisma": {
+  "prisma": {
     "schema": "prisma/schema.prisma"
   }
-
 }

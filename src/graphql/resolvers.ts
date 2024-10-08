@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client';
-import { VendorProfile } from '@prisma/client';
-import { getOrSetCache, invalidateCache } from '../services/cacheService';  // Import caching service
+import { getOrSetCache, invalidateCache } from '../services/cacheService';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 
 interface Context {
   prisma: PrismaClient;
@@ -95,6 +96,89 @@ export const resolvers = {
   },
 
   Mutation: {
+    // Register a new user
+    registerUser: async (_: any, { email, password }: { email: string; password: string }, { prisma }: Context) => {
+      try {
+        // Check if the user already exists
+        const existingUser = await prisma.user.findUnique({ where: { email } });
+        if (existingUser) {
+          throw new Error('Email is already registered');
+        }
+    
+        // Hash the password
+        console.log('Hashing password for:', email);
+        const hashedPassword = await bcrypt.hash(password, 10);
+    
+        // Create the user in the database
+        console.log('Creating new user with email:', email);
+        const newUser = await prisma.user.create({
+          data: {
+            email,
+            password: hashedPassword,
+          },
+        });
+    
+        // Generate the JWT token
+        console.log('Generating JWT token for user:', newUser.id);
+        const token = jwt.sign({ userId: newUser.id }, process.env.JWT_SECRET as string, { expiresIn: '1d' });
+    
+        // Return the token and user
+        console.log('User registration successful for:', newUser.email);
+        return {
+          token,
+          user: {
+            id: newUser.id,
+            email: newUser.email,
+          },
+        };
+      } catch (error) {
+        if (error instanceof Error) {
+          console.error('Error during user registration:', error.message); // Log the actual error
+        } else {
+          console.error('Unknown error during user registration:', error);
+        }
+        throw new Error('User registration failed');
+      }
+    },
+    
+    // Login a user
+    loginUser: async (_: any, args: { email: string, password: string }, { prisma }: Context) => {
+      const { email, password } = args;
+      try {
+        // Find the user by email
+        const user = await prisma.user.findUnique({ where: { email } });
+        if (!user || !user.password) {
+          throw new Error('Invalid credentials');
+        }
+
+        // Ensure the password is a string before comparing
+        if (typeof user.password !== 'string') {
+          throw new Error('Invalid credentials');
+        }
+
+        // Check if the password matches
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+        if (!isPasswordValid) {
+          throw new Error('Invalid credentials');
+        }
+
+        // Generate a JWT token
+        const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET as string, { expiresIn: '1d' });
+
+        // Return user data and token
+        return {
+          token,
+          user: {
+            ...user,
+            password: undefined, // Exclude password from response
+          },
+        };
+      } catch (error) {
+        console.error('Login Error:', error);
+        throw new Error('Login failed');
+      }
+    },
+
     createProduct: async (_: any, args: any, { prisma }: Context) => {
       try {
         const newProduct = await prisma.product.create({
