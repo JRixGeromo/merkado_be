@@ -18,6 +18,35 @@ export const typeDefs = gql`
     name: String!
     price: Float!
     vendor: VendorProfile!
+    reactions: [Reaction!]  # Include reactions for products
+  }
+
+  enum ReactionType {
+    LIKE
+    DISLIKE
+  }
+
+  type Reaction {
+    id: ID!
+    type: ReactionType!
+    product: Product!
+    user: User!
+  }
+
+  # Define Favorite type
+  type Favorite {
+    id: ID!
+    product: Product!
+    user: User!
+    createdAt: String!
+  }
+
+  # Define Wish type
+  type Wish {
+    id: ID!
+    product: Product!
+    user: User!
+    createdAt: String!
   }
 
   type Query {
@@ -30,5 +59,15 @@ export const typeDefs = gql`
     createProduct(name: String!, price: Float!, categoryId: Int!, vendorId: Int!, unitId: Int!): Product
     updateProduct(id: Int!, name: String, price: Float): Product
     deleteProduct(id: Int!): Boolean
+
+    # Add the missing addReaction and removeReaction mutations
+    addReaction(productId: ID!, type: ReactionType!): Reaction
+    removeReaction(productId: ID!): Boolean
+
+    # Add Favorite and Wish mutations
+    addFavorite(productId: ID!): Favorite
+    removeFavorite(productId: ID!): Boolean
+    addWish(productId: ID!): Wish
+    removeWish(productId: ID!): Boolean
   }
 `;
