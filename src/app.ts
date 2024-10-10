@@ -1,48 +1,37 @@
 import { ApolloServer } from '@apollo/server';
-import { expressMiddleware } from '@apollo/server/express4';
-import { ApolloServerPluginCacheControl } from '@apollo/server/plugin/cacheControl';  // Correct plugin import
-import express from 'express';
+import { ApolloServerPluginCacheControl } from '@apollo/server/plugin/cacheControl';
+import { startStandaloneServer } from '@apollo/server/standalone';
 import dotenv from 'dotenv';
-import prisma from './prisma';
+import prisma from './prisma';  // Prisma client
 import { typeDefs } from './graphql/schema';
 import { resolvers } from './graphql/resolvers';
-import { makeExecutableSchema } from '@graphql-tools/schema';
-import http from 'http';
 
 dotenv.config();
 
-const app = express();
-app.use(express.json());
+// Define the context type
+type Context = {
+  prisma: typeof prisma;
+};
 
-const schema = makeExecutableSchema({
+const server = new ApolloServer<Context>({
   typeDefs,
   resolvers,
-});
-
-const httpServer = http.createServer(app);
-
-const server = new ApolloServer({
-  schema,
   plugins: [
     ApolloServerPluginCacheControl({ defaultMaxAge: 5 }),  // Cache control plugin
   ],
 });
 
 async function startServer() {
-  await server.start();
+  const port = Number(process.env.PORT) || 5000;  // Ensure the port is a number
 
-  app.use(
-    '/graphql',
-    expressMiddleware(server, {
-      context: async () => ({ prisma }),  // Pass Prisma to resolvers
-    })
-  );
-
-  const PORT = process.env.PORT || 5000;
-  httpServer.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-    console.log(`GraphQL endpoint available at http://localhost:${PORT}/graphql`);
+  const { url } = await startStandaloneServer(server, {
+    listen: { port },  // Only pass port as a number
+    context: async () => ({
+      prisma,  // Pass Prisma to the context
+    }),
   });
+
+  console.log(`GraphQL server is running at ${url}`);
 }
 
 startServer();
