@@ -25,12 +25,12 @@ async function startServer() {
   const port = Number(process.env.PORT) || 5000;  // Ensure the port is a number
 
   const { url } = await startStandaloneServer(server, {
-    listen: { port },  // Only pass port as a number
+    listen: { port: Number(process.env.PORT) || 5000, host: '0.0.0.0' },  // Add host: '0.0.0.0'
     context: async () => ({
-      prisma,  // Pass Prisma to the context
+      prisma,
     }),
   });
-
+  
   console.log(`GraphQL server is running at ${url}`);
 }
 
