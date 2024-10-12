@@ -143,6 +143,10 @@ export const resolvers = {
           where: { id: newUser.id },
         });
     
+        if (!fetchedUser) {
+          throw new Error('User creation failed; unable to retrieve user from the database.');
+        }
+    
         // Generate JWT token
         const token = jwt.sign({ userId: newUser.id }, process.env.JWT_SECRET as string, {
           expiresIn: '1d',
@@ -152,36 +156,39 @@ export const resolvers = {
         return {
           token,
           user: {
-            id: fetchedUser?.id,
-            email: fetchedUser?.email,
-            firstName: fetchedUser?.firstName,
-            lastName: fetchedUser?.lastName,
-            birthdate: fetchedUser?.birthdate ? fetchedUser?.birthdate.toISOString().split('T')[0] : null,  // Correctly format birthdate to YYYY-MM-DD
-            gender: fetchedUser?.gender,
+            id: fetchedUser.id,
+            email: fetchedUser.email,
+            firstName: fetchedUser.firstName || null,
+            lastName: fetchedUser.lastName || null,
+            birthdate: fetchedUser.birthdate
+              ? fetchedUser.birthdate.toISOString().split('T')[0] // Correctly format birthdate to YYYY-MM-DD
+              : null,
+            gender: fetchedUser.gender,
           },
         };
       } catch (error: unknown) {
         // Enhanced error logging
         if (error instanceof Error) {
           console.error('Registration error:', {
-            message: error.message,  // Log the error message
-            stack: error.stack,      // Log the full stack trace
+            message: error.message, // Log the error message
+            stack: error.stack,     // Log the full stack trace
             details: {
               email,
               firstName,
               lastName,
               birthdate,
               gender,
-            },  // Log relevant data for debugging
+            }, // Log relevant data for debugging
           });
         } else {
           // If the error is not an instance of Error, log it as is
           console.error('An unknown error occurred:', error);
         }
-      
+    
         throw new Error('User registration failed');
       }
     },
+    
     
     // Login a user
     loginUser: async (_: any, args: { email: string, password: string }, { prisma }: Context) => {
