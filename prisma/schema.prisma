@@ -65,6 +65,7 @@ model Product {
   spreads         Spread[]        // Users who have spread the product
   liveShows       LiveShow[]      @relation("LiveShowProducts") // Shows that featured this product
   offlineShows    OfflineShow[]   @relation("OfflineShowProducts") // Shows that featured this product (added reverse relation)
+  isActive        Boolean         @default(true) // Whether the product is active or not
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
 }
