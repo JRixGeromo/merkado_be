@@ -17,6 +17,7 @@ model User {
   gender           Gender?
   profileImageUrl  String?
   vendorProfile    VendorProfile?
+  phoneNo          String?         // Optional phone number field
   orders           Order[]
   addresses        Address[]
   sentMessages     Chat[]          @relation("SentMessages")
@@ -25,7 +26,12 @@ model User {
   wishes           Wish[]
   favorites        Favorite[]
   reactions        Reaction[]
-  ratings          Rating[]
+  ratings          Rating[]        // Updated to add reverse relation for Rating
+  comments         Comment[]       // User's comments on products and shows
+  followers        Follow[]        @relation("Followers")
+  following        Follow[]        @relation("Following")
+  spreads          Spread[]        // Products or shows spread by the user
+  liveShowsViewed  LiveShow[]      @relation("LiveShowViewers") // Shows viewed by the user
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
 }
@@ -55,8 +61,12 @@ model Product {
   favorites       Favorite[] // Relation to Favorite model
   reactions       Reaction[] // Relation to Reaction model
   ratings         Rating[] // Relation to Rating model
-  createdAt       DateTime        @default(now())   // Timestamp when the product is created
-  updatedAt       DateTime        @updatedAt        // Timestamp when the product is last updated
+  comments        Comment[]       // Comments on the product
+  spreads         Spread[]        // Users who have spread the product
+  liveShows       LiveShow[]      @relation("LiveShowProducts") // Shows that featured this product
+  offlineShows    OfflineShow[]   @relation("OfflineShowProducts") // Shows that featured this product (added reverse relation)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
 }
 
 model Rating {
@@ -64,10 +74,10 @@ model Rating {
   score       Int      @default(0)  // Rating score (e.g., 1 to 5 stars)
   comment     String?  // Optional comment with the rating
   product     Product  @relation(fields: [productId], references: [id])
-  productId   Int      // Relation to the rated product
-  user        User     @relation(fields: [userId], references: [id])
-  userId      Int      // Relation to the user who gave the rating
-  createdAt   DateTime @default(now())  // Timestamp when the rating was created
+  productId   Int
+  user        User     @relation(fields: [userId], references: [id]) // Added reverse relation for User
+  userId      Int
+  createdAt   DateTime @default(now())
 }
 
 model ProductCategory {
@@ -77,8 +87,8 @@ model ProductCategory {
   iconUrl        String?   // Small icon for category representation
   bannerImageUrl String?   // Banner image for category page or section
   products       Product[] // Relation to products
-  createdAt      DateTime  @default(now())  // Timestamp when the category is created
-  updatedAt      DateTime  @updatedAt       // Timestamp when the category is last updated
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 }
 
 model SocialAccount {
@@ -86,8 +96,8 @@ model SocialAccount {
   provider          String // e.g., "google", "facebook"
   providerAccountId String // The unique ID provided by the social login provider (e.g., Google ID, Facebook ID)
   user              User   @relation(fields: [userId], references: [id])
-  userId            Int // Links back to the User model
-  createdAt         DateTime @default(now())   // Track when the social account was linked
+  userId            Int
+  createdAt         DateTime @default(now())
 }
 
 model VendorProfile {
@@ -103,11 +113,12 @@ model VendorProfile {
   products        Product[] @relation("VendorProducts")
   user            User      @relation(fields: [userId], references: [id])
   userId          Int       @unique
+  liveShows       LiveShow[]
+  offlineShows    OfflineShow[]
   marketingCampaigns MarketingCampaign[]
-  createdAt       DateTime        @default(now())   // Timestamp when the vendor profile is created
-  updatedAt       DateTime        @updatedAt        // Timestamp when the vendor profile is last updated
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 }
-
 
 model Wish {
   id        Int      @id @default(autoincrement())
@@ -115,7 +126,7 @@ model Wish {
   productId Int
   user      User     @relation(fields: [userId], references: [id])
   userId    Int
-  createdAt DateTime @default(now())  // Timestamp when the wish is created
+  createdAt DateTime @default(now())
 }
 
 model Favorite {
@@ -124,22 +135,36 @@ model Favorite {
   productId Int
   user      User     @relation(fields: [userId], references: [id])
   userId    Int
-  createdAt DateTime @default(now())  // Timestamp when the favorite is created
+  createdAt DateTime @default(now())
 }
 
 model Reaction {
   id        Int      @id @default(autoincrement())
   type      ReactionType
-  product   Product  @relation(fields: [productId], references: [id])
-  productId Int
+  product   Product?  @relation(fields: [productId], references: [id])
+  productId Int?
+  liveShow  LiveShow? @relation(fields: [liveShowId], references: [id])
+  liveShowId Int?
+  offlineShow OfflineShow? @relation(fields: [offlineShowId], references: [id])
+  offlineShowId Int?
   user      User     @relation(fields: [userId], references: [id])
   userId    Int
-  createdAt DateTime @default(now())  // Timestamp when the reaction is created
+  createdAt DateTime @default(now())
 }
 
 enum ReactionType {
   LIKE
   DISLIKE
+  LOVE
+  WOW
+  SAD
+  ANGRY
+  SPICY
+  SWEET
+  CRUNCHY
+  MEH
+  TOO_SALTY
+  TOO_SWEET
 }
 
 model Order {
@@ -148,19 +173,23 @@ model Order {
   totalAmount      Float         // Total price of the order
   customer         User          @relation(fields: [userId], references: [id])
   userId           Int
-  payment          Payment?      // Add this to make the relation bidirectional
+  payment          Payment?
   orderItems       OrderItem[]   // Relation to order items
-  createdAt        DateTime      @default(now())   // Timestamp when the order is created
-  updatedAt        DateTime      @updatedAt        // Timestamp when the order is last updated
-  
-  // Serving option: Pickup or Delivery
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
   servingOption    ServingOption @default(PICKUP)
-
-  // Payment option: Cash or Cash on Delivery
   paymentOption    PaymentOption @default(CASH)
-
-  // Buying option: Reservation or Direct Purchase
   buyingOption     BuyingOption  @default(DIRECT)
+}
+
+model OrderItem {
+  id          Int     @id @default(autoincrement())
+  order       Order   @relation(fields: [orderId], references: [id])
+  orderId     Int
+  product     Product @relation(fields: [productId], references: [id])
+  productId   Int
+  quantity    Int     @default(1)
+  priceAtTime Float
 }
 
 enum ServingOption {
@@ -178,16 +207,6 @@ enum BuyingOption {
   DIRECT
 }
 
-model OrderItem {
-  id          Int     @id @default(autoincrement())
-  order       Order   @relation(fields: [orderId], references: [id])
-  orderId     Int
-  product     Product @relation(fields: [productId], references: [id])
-  productId   Int
-  quantity    Int     @default(1)
-  priceAtTime Float // Price of the product at the time of purchase
-}
-
 model Payment {
   id            Int           @id @default(autoincrement())
   method        PaymentMethod
@@ -196,61 +215,7 @@ model Payment {
   order         Order         @relation(fields: [orderId], references: [id])
   orderId       Int           @unique
   status        PaymentStatus @default(PENDING)
-  createdAt     DateTime      @default(now())  // Timestamp when the payment is created
-}
-
-model ProductImage {
-  id        Int     @id @default(autoincrement())
-  imageUrl  String // URL to the image in cloud storage or path if using local storage
-  product   Product @relation(fields: [productId], references: [id])
-  productId Int
-}
-
-model UnitOfMeasure {
-  id       Int       @id @default(autoincrement())
-  name     String    @unique // e.g., "sack", "serve", "bundle"
-  products Product[] // Relation to products using this unit
-}
-
-model Address {
-  id         Int    @id @default(autoincrement())
-  postalCode String
-  latitude   Float?  // Latitude for Google Maps
-  longitude  Float?  // Longitude for Google Maps
-  user       User   @relation(fields: [userId], references: [id])
-  userId     Int
-  createdAt  DateTime @default(now())  // Timestamp when the address is created
-}
-
-model Chat {
-  id          Int      @id @default(autoincrement())
-  message     String
-  sender      User     @relation("SentMessages", fields: [senderId], references: [id])
-  senderId    Int
-  recipient   User     @relation("ReceivedMessages", fields: [recipientId], references: [id])
-  recipientId Int
-  sentAt      DateTime @default(now())  // Timestamp when the message is sent
-  attachments ChatAttachment[] // Relation to ChatAttachment model
-}
-
-model ChatAttachment {
-  id      Int    @id @default(autoincrement())
-  fileUrl String // URL to file (images, documents, etc.)
-  chat    Chat   @relation(fields: [chatId], references: [id])
-  chatId  Int
-}
-
-model MarketingCampaign {
-  id          Int      @id @default(autoincrement())
-  title       String
-  description String
-  startDate   DateTime
-  endDate     DateTime
-  discount    Float?   // Percentage or flat discount
-  vendor      VendorProfile @relation(fields: [vendorId], references: [id])
-  vendorId    Int
-  createdAt   DateTime @default(now())   // Timestamp when the campaign is created
-  updatedAt   DateTime @updatedAt        // Timestamp when the campaign is last updated
+  createdAt     DateTime      @default(now())
 }
 
 enum PaymentMethod {
@@ -266,6 +231,149 @@ enum PaymentStatus {
   PENDING
   COMPLETED
   FAILED
+}
+
+model ProductImage {
+  id        Int     @id @default(autoincrement())
+  imageUrl  String
+  product   Product @relation(fields: [productId], references: [id])
+  productId Int
+}
+
+model UnitOfMeasure {
+  id       Int       @id @default(autoincrement())
+  name     String    @unique // e.g., "sack", "serve", "bundle"
+  products Product[]
+}
+
+model Address {
+  id         Int    @id @default(autoincrement())
+  postalCode String
+  latitude   Float?
+  longitude  Float?
+  user       User   @relation(fields: [userId], references: [id])
+  userId     Int
+  createdAt  DateTime @default(now())
+}
+
+model Chat {
+  id          Int      @id @default(autoincrement())
+  message     String
+  sender      User     @relation("SentMessages", fields: [senderId], references: [id])
+  senderId    Int
+  recipient   User     @relation("ReceivedMessages", fields: [recipientId], references: [id])
+  recipientId Int
+  sentAt      DateTime @default(now())
+  attachments ChatAttachment[]
+}
+
+model ChatAttachment {
+  id      Int    @id @default(autoincrement())
+  fileUrl String
+  chat    Chat   @relation(fields: [chatId], references: [id])
+  chatId  Int
+}
+
+model LiveShow {
+  id          Int             @id @default(autoincrement())
+  title       String
+  description String?
+  startTime   DateTime
+  duration    Int
+  vendor      VendorProfile   @relation(fields: [vendorId], references: [id])
+  vendorId    Int
+  products    Product[]       @relation("LiveShowProducts")
+  viewers     User[]          @relation("LiveShowViewers")
+  liveSelling Boolean         @default(true)
+  reactions   Reaction[]      // Reactions on the live show
+  comments    Comment[]       // Comments on the live show
+  spreads     Spread[]        // Users who have spread the live show
+  content     ShowContent[]   // Reverse relation for ShowContent
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+}
+
+model OfflineShow {
+  id          Int             @id @default(autoincrement())
+  title       String
+  description String?
+  scheduleAt  DateTime
+  interval    Int
+  vendor      VendorProfile   @relation(fields: [vendorId], references: [id])
+  vendorId    Int
+  products    Product[]       @relation("OfflineShowProducts") // Added reverse relation
+  content     ShowContent[]
+  reactions   Reaction[]
+  comments    Comment[]
+  spreads     Spread[]
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+}
+
+model ShowContent {
+  id          Int     @id @default(autoincrement())
+  contentUrl  String
+  contentType ContentType
+  liveShow    LiveShow? @relation(fields: [liveShowId], references: [id])
+  liveShowId  Int?
+  offlineShow OfflineShow? @relation(fields: [offlineShowId], references: [id])
+  offlineShowId Int?
+  duration    Int?
+}
+
+model Comment {
+  id        Int      @id @default(autoincrement())
+  content   String
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int
+  product   Product? @relation(fields: [productId], references: [id])
+  productId Int?
+  liveShow  LiveShow? @relation(fields: [liveShowId], references: [id])
+  liveShowId Int?
+  offlineShow OfflineShow? @relation(fields: [offlineShowId], references: [id])
+  offlineShowId Int?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Follow {
+  id        Int      @id @default(autoincrement())
+  follower  User     @relation("Followers", fields: [followerId], references: [id])
+  followerId Int
+  following User     @relation("Following", fields: [followingId], references: [id])
+  followingId Int
+  createdAt DateTime @default(now())
+}
+
+model Spread {
+  id        Int      @id @default(autoincrement())
+  product   Product?  @relation(fields: [productId], references: [id])
+  productId Int?
+  liveShow  LiveShow? @relation(fields: [liveShowId], references: [id])
+  liveShowId Int?
+  offlineShow OfflineShow? @relation(fields: [offlineShowId], references: [id])
+  offlineShowId Int?
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int
+  createdAt DateTime @default(now())
+}
+
+enum ContentType {
+  VIDEO
+  IMAGE
+}
+
+model MarketingCampaign {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String
+  startDate   DateTime
+  endDate     DateTime
+  discount    Float?
+  vendor      VendorProfile @relation(fields: [vendorId], references: [id])
+  vendorId    Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 enum OrderStatus {
