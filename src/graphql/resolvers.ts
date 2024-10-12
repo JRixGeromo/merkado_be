@@ -160,11 +160,29 @@ export const resolvers = {
             gender: fetchedUser?.gender,
           },
         };
-      } catch (error) {
-        console.error('Registration error:', error);
+      } catch (error: unknown) {
+        // Enhanced error logging
+        if (error instanceof Error) {
+          console.error('Registration error:', {
+            message: error.message,  // Log the error message
+            stack: error.stack,      // Log the full stack trace
+            details: {
+              email,
+              firstName,
+              lastName,
+              birthdate,
+              gender,
+            },  // Log relevant data for debugging
+          });
+        } else {
+          // If the error is not an instance of Error, log it as is
+          console.error('An unknown error occurred:', error);
+        }
+      
         throw new Error('User registration failed');
       }
     },
+    
     // Login a user
     loginUser: async (_: any, args: { email: string, password: string }, { prisma }: Context) => {
       const { email, password } = args;

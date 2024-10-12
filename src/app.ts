@@ -13,12 +13,34 @@ type Context = {
   prisma: typeof prisma;
 };
 
+// Create Apollo Server instance
 const server = new ApolloServer<Context>({
   typeDefs,
   resolvers,
   plugins: [
     ApolloServerPluginCacheControl({ defaultMaxAge: 5 }),  // Cache control plugin
+    {
+      async requestDidStart() {
+        console.log('GraphQL Request Started');
+
+        return {
+          async willSendResponse(requestContext) {
+            console.log('GraphQL Response:', requestContext.response);
+          },
+        };
+      },
+    },
   ],
+  formatError: (error) => {
+    // Log detailed errors on the server side
+    console.error('[GraphQL Error]:', {
+      message: error.message,
+      locations: error.locations,
+      path: error.path,
+      extensions: error.extensions,
+    });
+    return error;  // Ensure the error is still returned to the client
+  },
 });
 
 async function startServer() {
