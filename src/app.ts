@@ -17,9 +17,9 @@ type Context = {
 const server = new ApolloServer<Context>({
   typeDefs,
   resolvers,
+  introspection: process.env.NODE_ENV !== 'production', 
   plugins: [
     ApolloServerPluginCacheControl({ defaultMaxAge: 5 }),  // Cache control plugin
-
     // Request/Response Logging Plugin
     {
       async requestDidStart() {
