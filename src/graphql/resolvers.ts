@@ -117,61 +117,54 @@ export const resolvers = {
       { prisma }: Context
     ) => {
       try {
-        // Check if the user already exists
-        const existingUser = await prisma.user.findUnique({ where: { email } });
+        // Step 1: Check if the user already exists
+        const existingUser = await prisma.user.findUnique({
+          where: { email },
+        });
         if (existingUser) {
           throw new Error('Email is already registered');
         }
     
-        // Hash the password
+        // Step 2: Hash the password
         const hashedPassword = await bcrypt.hash(password, 10);
     
-        // Create the user in the database with additional fields
+        // Step 3: Create a new user in the database
         const newUser = await prisma.user.create({
           data: {
             email,
             password: hashedPassword,
-            firstName,
-            lastName,
-            birthdate: birthdate ? new Date(birthdate) : null,  // Store birthdate as a Date object
+            firstName: firstName || null, // Default to null if not provided
+            lastName: lastName || null,   // Default to null if not provided
+            birthdate: birthdate ? new Date(birthdate) : null, // Store birthdate as a Date object or null
             gender,
           },
         });
     
-        // Fetch the newly created user from the database to include all fields
-        const fetchedUser = await prisma.user.findUnique({
-          where: { id: newUser.id },
-        });
-    
-        if (!fetchedUser) {
-          throw new Error('User creation failed; unable to retrieve user from the database.');
-        }
-    
-        // Generate JWT token
+        // Step 4: Generate a JWT token for the new user
         const token = jwt.sign({ userId: newUser.id }, process.env.JWT_SECRET as string, {
           expiresIn: '1d',
         });
     
-        // Return the token and user with additional fields, format birthdate if it exists
+        // Step 5: Return the token and user information
         return {
           token,
           user: {
-            id: fetchedUser.id,
-            email: fetchedUser.email,
-            firstName: fetchedUser.firstName || null,
-            lastName: fetchedUser.lastName || null,
-            birthdate: fetchedUser.birthdate
-              ? fetchedUser.birthdate.toISOString().split('T')[0] // Correctly format birthdate to YYYY-MM-DD
+            id: newUser.id,
+            email: newUser.email,
+            firstName: newUser.firstName || null,
+            lastName: newUser.lastName || null,
+            birthdate: newUser.birthdate
+              ? newUser.birthdate.toISOString().split('T')[0] // Format birthdate as YYYY-MM-DD
               : null,
-            gender: fetchedUser.gender,
+            gender: newUser.gender,
           },
         };
       } catch (error: unknown) {
-        // Enhanced error logging
+        // Step 6: Enhanced error logging
         if (error instanceof Error) {
           console.error('Registration error:', {
-            message: error.message, // Log the error message
-            stack: error.stack,     // Log the full stack trace
+            message: error.message,  // Log the error message
+            stack: error.stack,      // Log the full stack trace
             details: {
               email,
               firstName,
@@ -185,10 +178,10 @@ export const resolvers = {
           console.error('An unknown error occurred:', error);
         }
     
+        // Throw an error to propagate it back to the client
         throw new Error('User registration failed');
       }
     },
-    
     
     // Login a user
     loginUser: async (_: any, args: { email: string, password: string }, { prisma }: Context) => {

@@ -19,18 +19,24 @@ const server = new ApolloServer<Context>({
   resolvers,
   plugins: [
     ApolloServerPluginCacheControl({ defaultMaxAge: 5 }),  // Cache control plugin
+
+    // Request/Response Logging Plugin
     {
       async requestDidStart() {
         console.log('GraphQL Request Started');
 
         return {
           async willSendResponse(requestContext) {
-            console.log('GraphQL Response:', requestContext.response);
+            // Ensure the response has a status code
+            const status = requestContext.response.http?.status || 'undefined';
+            console.log(`GraphQL Response: { status: ${status}, body: ${JSON.stringify(requestContext.response.body)} }`);
           },
         };
       },
     },
   ],
+
+  // Error formatting for server-side logs
   formatError: (error) => {
     // Log detailed errors on the server side
     console.error('[GraphQL Error]:', {
@@ -44,16 +50,18 @@ const server = new ApolloServer<Context>({
 });
 
 async function startServer() {
-  const port = Number(process.env.PORT) || 5000;  // Ensure the port is a number
+  // Ensure port is correctly parsed from .env or fallback to 5000
+  const port = Number(process.env.PORT) || 5000;  
 
   const { url } = await startStandaloneServer(server, {
-    listen: { port: Number(process.env.PORT) || 5000, host: '0.0.0.0' },  // Add host: '0.0.0.0'
+    listen: { port: port, host: '0.0.0.0' },  // Ensure server is available on 0.0.0.0
     context: async () => ({
-      prisma,
+      prisma,  // Attach Prisma to context for each request
     }),
   });
-  
+
   console.log(`GraphQL server is running at ${url}`);
 }
 
+// Start the server
 startServer();
