@@ -28,7 +28,6 @@ model User {
   ratings          Rating[]
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
-  location         String?         // Add location as an optional field
 }
 
 enum Gender {

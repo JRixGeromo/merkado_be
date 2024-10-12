@@ -102,18 +102,18 @@ export const resolvers = {
       {
         email,
         password,
-        firstName, 
-        lastName, 
-        birthdate, 
-        gender, 
-        location
+        firstName,
+        lastName,
+        birthdate,
+        gender,
+        location,
       }: {
         email: string;
         password: string;
         firstName?: string;
         lastName?: string;
         birthdate?: string;
-        gender?: 'MALE' | 'FEMALE' | 'OTHER';  // Ensure that gender matches the Prisma enum type
+        gender?: 'MALE' | 'FEMALE' | 'OTHER';
         location?: string;
       },
       { prisma }: Context
@@ -128,16 +128,21 @@ export const resolvers = {
         // Hash the password
         const hashedPassword = await bcrypt.hash(password, 10);
     
-        // Create the user in the database
+        // Create the user in the database with additional fields
         const newUser = await prisma.user.create({
           data: {
             email,
             password: hashedPassword,
-            firstName,
-            lastName,
-            birthdate: birthdate ? new Date(birthdate) : null,  // Ensure date conversion
-            gender: gender || 'OTHER',  // Explicitly set gender to match Prisma enum
+            firstName,                  // Store firstName
+            lastName,                   // Store lastName
+            birthdate: birthdate ? new Date(birthdate) : null,  // Store birthdate as a Date object
+            gender,                     // Store gender
           },
+        });
+    
+        // Fetch the newly created user from the database to include all fields
+        const fetchedUser = await prisma.user.findUnique({
+          where: { id: newUser.id },
         });
     
         // Generate JWT token
@@ -145,12 +150,16 @@ export const resolvers = {
           expiresIn: '1d',
         });
     
-        // Return the token and user
+        // Return the token and user with additional fields
         return {
           token,
           user: {
-            id: newUser.id,
-            email: newUser.email,
+            id: fetchedUser?.id,
+            email: fetchedUser?.email,
+            firstName: fetchedUser?.firstName,
+            lastName: fetchedUser?.lastName,
+            birthdate: fetchedUser?.birthdate,
+            gender: fetchedUser?.gender,
           },
         };
       } catch (error) {

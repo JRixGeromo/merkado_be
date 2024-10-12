@@ -5,11 +5,10 @@ export const typeDefs = gql`
   type User {
     id: ID!
     email: String!
-    firstName: String         # First name of the user
-    lastName: String          # Last name of the user
-    birthdate: String         # Birthdate of the user in YYYY-MM-DD format
-    gender: Gender            # Gender enum (MALE, FEMALE, OTHER)
-    location: String          # User's location (optional)
+    firstName: String 
+    lastName: String  
+    birthdate: String 
+    gender: Gender    
     vendorProfile: VendorProfile
   }
 
@@ -27,11 +26,11 @@ export const typeDefs = gql`
 
   type VendorProfile {
     id: ID!
-    businessName: String!   # New field for the business name
-    businessType: String!   # New field for the business type
-    businessPhone: String!  # New field for the business phone
-    businessEmail: String   # Existing or optional business email
-    location: String        # Google Maps location
+    businessName: String! 
+    businessType: String! 
+    businessPhone: String!
+    businessEmail: String 
+    location: String      
     user: User!
   }
 
@@ -40,7 +39,7 @@ export const typeDefs = gql`
     name: String!
     price: Float!
     vendor: VendorProfile!
-    reactions: [Reaction!]  # Include reactions for products
+    reactions: [Reaction!]
   }
 
   enum ReactionType {
@@ -72,21 +71,21 @@ export const typeDefs = gql`
   }
 
   type Query {
-    users: [User!]  # Query to fetch all users
-    products: [Product!]  # Query to fetch all products
-    productById(id: ID!): Product  # Query to fetch product by ID
-    vendorProfileByUserId(userId: ID!): VendorProfile  # Query to fetch vendor profile by user ID
+    users: [User!] 
+    products: [Product!]
+    productById(id: ID!): Product 
+    vendorProfileByUserId(userId: ID!): VendorProfile  
   }
 
   type Mutation {
     registerUser(
       email: String!,
       password: String!,
-      firstName: String,       # Optional firstName argument
-      lastName: String,        # Optional lastName argument
-      birthdate: String,       # Optional birthdate argument
-      gender: Gender,          # Optional gender argument
-      location: String         # Optional location argument
+      firstName: String,
+      lastName: String, 
+      birthdate: String,
+      gender: Gender,   
+      location: String  
     ): AuthPayload!
 
     loginUser(email: String!, password: String!): AuthPayload!  

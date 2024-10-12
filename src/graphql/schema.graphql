@@ -1,10 +1,10 @@
 # Define Query type with caching directives
 type Query {
-  products: [Product] @cacheControl(maxAge: 60)  # Cache the product query for 60 seconds
-  orders: [Order] @cacheControl(maxAge: 30)      # Cache the order query for 30 seconds
-  productById(id: ID!): Product                  # Query a product by ID
-  users: [User!]                                 # Query users
-  vendorProfileByUserId(userId: ID!): VendorProfile # Query vendor profile by user ID
+  products: [Product] @cacheControl(maxAge: 60) 
+  orders: [Order] @cacheControl(maxAge: 30)     
+  productById(id: ID!): Product                 
+  users: [User!]                                
+  vendorProfileByUserId(userId: ID!): VendorProfile
 }
 
 # Define Product type
@@ -13,10 +13,10 @@ type Product {
   name: String!
   price: Float!
   description: String
-  longDescription: String  # Detailed description of the product
+  longDescription: String 
   imageUrl: String
-  vendor: VendorProfile!    # Relation to vendor
-  reactions: [Reaction!]    # List of reactions (likes/dislikes)
+  vendor: VendorProfile!  
+  reactions: [Reaction!]  
 }
 
 # Define Reaction type
@@ -36,11 +36,11 @@ enum ReactionType {
 # Define VendorProfile type with additional fields
 type VendorProfile {
   id: ID!
-  businessName: String!     # Name of the business
-  businessType: String!     # Type of business (e.g., retail, wholesale)
-  businessPhone: String!    # Business phone number
-  businessEmail: String     # Business email (optional)
-  location: String          # Google Maps location of the business
+  businessName: String! 
+  businessType: String! 
+  businessPhone: String!
+  businessEmail: String 
+  location: String      
   user: User!
 }
 
@@ -61,11 +61,10 @@ type AuthPayload {
 type User {
   id: ID!
   email: String!
-  firstName: String          # First name of the user
-  lastName: String           # Last name of the user
-  birthdate: String          # Birthdate of the user in YYYY-MM-DD format
-  gender: Gender             # Gender enum (MALE, FEMALE, OTHER)
-  location: String           # User's location (optional)
+  firstName: String 
+  lastName: String  
+  birthdate: String 
+  gender: Gender    
   vendorProfile: VendorProfile
 }
 
