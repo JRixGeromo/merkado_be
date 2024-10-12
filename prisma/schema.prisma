@@ -32,6 +32,7 @@ model User {
   following        Follow[]        @relation("Following")
   spreads          Spread[]        // Products or shows spread by the user
   liveShowsViewed  LiveShow[]      @relation("LiveShowViewers") // Shows viewed by the user
+  chatRooms        ChatParticipant[] // Chat rooms the user participates in (group chat)
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
 }
@@ -264,8 +265,29 @@ model Chat {
   senderId    Int
   recipient   User     @relation("ReceivedMessages", fields: [recipientId], references: [id])
   recipientId Int
-  sentAt      DateTime @default(now())
+  chatRoom    ChatRoom @relation(fields: [chatRoomId], references: [id])
+  chatRoomId  Int
+  sentAt      DateTime  @default(now())
   attachments ChatAttachment[]
+}
+
+
+model ChatRoom {
+  id          Int            @id @default(autoincrement())
+  name        String?        // Optional name for group chats
+  participants ChatParticipant[] // Relation to participants
+  messages    Chat[]         // Relation to messages in this room
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+}
+
+model ChatParticipant {
+  id        Int    @id @default(autoincrement())
+  user      User   @relation(fields: [userId], references: [id])
+  userId    Int
+  chatRoom  ChatRoom @relation(fields: [chatRoomId], references: [id])
+  chatRoomId Int
+  joinedAt  DateTime @default(now())
 }
 
 model ChatAttachment {
