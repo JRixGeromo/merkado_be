@@ -106,7 +106,6 @@ export const resolvers = {
         lastName,
         birthdate,
         gender,
-        location,
       }: {
         email: string;
         password: string;
@@ -114,7 +113,6 @@ export const resolvers = {
         lastName?: string;
         birthdate?: string;
         gender?: 'MALE' | 'FEMALE' | 'OTHER';
-        location?: string;
       },
       { prisma }: Context
     ) => {
@@ -133,10 +131,10 @@ export const resolvers = {
           data: {
             email,
             password: hashedPassword,
-            firstName,                  // Store firstName
-            lastName,                   // Store lastName
+            firstName,
+            lastName,
             birthdate: birthdate ? new Date(birthdate) : null,  // Store birthdate as a Date object
-            gender,                     // Store gender
+            gender,
           },
         });
     
@@ -150,7 +148,7 @@ export const resolvers = {
           expiresIn: '1d',
         });
     
-        // Return the token and user with additional fields
+        // Return the token and user with additional fields, format birthdate if it exists
         return {
           token,
           user: {
@@ -158,7 +156,7 @@ export const resolvers = {
             email: fetchedUser?.email,
             firstName: fetchedUser?.firstName,
             lastName: fetchedUser?.lastName,
-            birthdate: fetchedUser?.birthdate,
+            birthdate: fetchedUser?.birthdate ? fetchedUser?.birthdate.toISOString().split('T')[0] : null,  // Correctly format birthdate to YYYY-MM-DD
             gender: fetchedUser?.gender,
           },
         };
@@ -167,7 +165,6 @@ export const resolvers = {
         throw new Error('User registration failed');
       }
     },
-    
     // Login a user
     loginUser: async (_: any, args: { email: string, password: string }, { prisma }: Context) => {
       const { email, password } = args;
