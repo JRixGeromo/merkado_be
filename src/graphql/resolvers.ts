@@ -97,7 +97,27 @@ export const resolvers = {
 
   Mutation: {
     // Register a new user
-    registerUser: async (_: any, { email, password }: { email: string; password: string }, { prisma }: Context) => {
+    registerUser: async (
+      _: any,
+      {
+        email,
+        password,
+        firstName, 
+        lastName, 
+        birthdate, 
+        gender, 
+        location
+      }: {
+        email: string;
+        password: string;
+        firstName?: string;
+        lastName?: string;
+        birthdate?: string;
+        gender?: 'MALE' | 'FEMALE' | 'OTHER';  // Ensure that gender matches the Prisma enum type
+        location?: string;
+      },
+      { prisma }: Context
+    ) => {
       try {
         // Check if the user already exists
         const existingUser = await prisma.user.findUnique({ where: { email } });
@@ -106,24 +126,26 @@ export const resolvers = {
         }
     
         // Hash the password
-        console.log('Hashing password for:', email);
         const hashedPassword = await bcrypt.hash(password, 10);
     
         // Create the user in the database
-        console.log('Creating new user with email:', email);
         const newUser = await prisma.user.create({
           data: {
             email,
             password: hashedPassword,
+            firstName,
+            lastName,
+            birthdate: birthdate ? new Date(birthdate) : null,  // Ensure date conversion
+            gender: gender || 'OTHER',  // Explicitly set gender to match Prisma enum
           },
         });
     
-        // Generate the JWT token
-        console.log('Generating JWT token for user:', newUser.id);
-        const token = jwt.sign({ userId: newUser.id }, process.env.JWT_SECRET as string, { expiresIn: '1d' });
+        // Generate JWT token
+        const token = jwt.sign({ userId: newUser.id }, process.env.JWT_SECRET as string, {
+          expiresIn: '1d',
+        });
     
         // Return the token and user
-        console.log('User registration successful for:', newUser.email);
         return {
           token,
           user: {
@@ -132,11 +154,7 @@ export const resolvers = {
           },
         };
       } catch (error) {
-        if (error instanceof Error) {
-          console.error('Error during user registration:', error.message); // Log the actual error
-        } else {
-          console.error('Unknown error during user registration:', error);
-        }
+        console.error('Registration error:', error);
         throw new Error('User registration failed');
       }
     },

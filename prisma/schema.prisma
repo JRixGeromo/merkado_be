@@ -11,23 +11,24 @@ model User {
   id               Int             @id @default(autoincrement())
   email            String?         @unique
   password         String?
-  firstName        String?         // Optional first name field
-  lastName         String?         // Optional last name field
-  birthdate        DateTime?       // Optional birthdate field
-  gender           Gender? // Now uses enum instead of String
-  profileImageUrl  String?         // URL for profile image
+  firstName        String?
+  lastName         String?
+  birthdate        DateTime?
+  gender           Gender?
+  profileImageUrl  String?
   vendorProfile    VendorProfile?
   orders           Order[]
   addresses        Address[]
   sentMessages     Chat[]          @relation("SentMessages")
   receivedMessages Chat[]          @relation("ReceivedMessages")
-  socialAccounts   SocialAccount[] // Relation to SocialAccount
-  wishes           Wish[] // Relation to Wish model
-  favorites        Favorite[] // Relation to Favorite model
-  reactions        Reaction[] // Relation to Reaction model
-  ratings          Rating[] // Relation to Rating model
-  createdAt        DateTime        @default(now())   // Timestamp when the user is created
-  updatedAt        DateTime        @updatedAt        // Timestamp when the user is last updated
+  socialAccounts   SocialAccount[]
+  wishes           Wish[]
+  favorites        Favorite[]
+  reactions        Reaction[]
+  ratings          Rating[]
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  location         String?         // Add location as an optional field
 }
 
 enum Gender {

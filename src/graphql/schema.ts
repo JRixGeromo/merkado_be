@@ -1,10 +1,23 @@
 import { gql } from 'graphql-tag';
 
 export const typeDefs = gql`
+  # Define User type with additional fields
   type User {
     id: ID!
     email: String!
+    firstName: String         # First name of the user
+    lastName: String          # Last name of the user
+    birthdate: String         # Birthdate of the user in YYYY-MM-DD format
+    gender: Gender            # Gender enum (MALE, FEMALE, OTHER)
+    location: String          # User's location (optional)
     vendorProfile: VendorProfile
+  }
+
+  # Define Gender enum
+  enum Gender {
+    MALE
+    FEMALE
+    OTHER
   }
 
   type AuthPayload {
@@ -66,7 +79,16 @@ export const typeDefs = gql`
   }
 
   type Mutation {
-    registerUser(email: String!, password: String!): AuthPayload!
+    registerUser(
+      email: String!,
+      password: String!,
+      firstName: String,       # Optional firstName argument
+      lastName: String,        # Optional lastName argument
+      birthdate: String,       # Optional birthdate argument
+      gender: Gender,          # Optional gender argument
+      location: String         # Optional location argument
+    ): AuthPayload!
+
     loginUser(email: String!, password: String!): AuthPayload!  
     
     # Product mutations
