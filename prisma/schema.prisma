@@ -49,26 +49,35 @@ model Product {
   stock           Int             @default(0)
   price           Float
   salePrice       Float?
-  longDescription String? // Detailed product info
-  images          ProductImage[] // Relation to ProductImage model
+  longDescription String? 
+  images          ProductImage[]  
   category        ProductCategory @relation(fields: [categoryId], references: [id])
   categoryId      Int
   vendor          VendorProfile   @relation("VendorProducts", fields: [vendorId], references: [id])
   vendorId        Int
   unit            UnitOfMeasure   @relation(fields: [unitId], references: [id])
   unitId          Int
-  orders          OrderItem[] // Link to OrderItem model
-  wishes          Wish[] // Relation to Wish model
-  favorites       Favorite[] // Relation to Favorite model
-  reactions       Reaction[] // Relation to Reaction model
-  ratings         Rating[] // Relation to Rating model
-  comments        Comment[]       // Comments on the product
-  spreads         Spread[]        // Users who have spread the product
-  liveShows       LiveShow[]      @relation("LiveShowProducts") // Shows that featured this product
-  offlineShows    OfflineShow[]   @relation("OfflineShowProducts") // Shows that featured this product (added reverse relation)
-  isActive        Boolean         @default(true) // Whether the product is active or not
+  brand           Brand           @relation(fields: [brandId], references: [id]) // New relation to Brand model
+  brandId         Int             // Foreign key to Brand
+  isFeatured      Boolean         @default(false) // New isFeatured field
+  orders          OrderItem[]    
+  wishes          Wish[]          
+  favorites       Favorite[]      
+  reactions       Reaction[]      
+  ratings         Rating[]        
+  comments        Comment[]       
+  spreads         Spread[]        
+  liveShows       LiveShow[]      @relation("LiveShowProducts") 
+  offlineShows    OfflineShow[]   @relation("OfflineShowProducts") 
+  isActive        Boolean         @default(true) 
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
+}
+
+model Brand {
+  id       Int       @id @default(autoincrement())
+  name     String    @unique
+  products Product[] // Relation to products
 }
 
 model Rating {
