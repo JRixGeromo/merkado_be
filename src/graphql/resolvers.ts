@@ -20,11 +20,27 @@ export const resolvers = {
     },
 
     // Cache the products query
-    products: async (_: any, __: any, { prisma }: Context) => {
+    products: async (_: any, args: { categoryId?: number; brand?: string; vendorId?: number; isFeatured?: boolean; onSale?: boolean; newProducts?: boolean }, { prisma }: Context) => {
       const cacheKey = `${PRODUCT_CACHE_KEY_PREFIX}all`;
+
+      const filters: any = {};
+
+      // Add filters based on the arguments provided
+      if (args.categoryId) filters.categoryId = args.categoryId;
+      if (args.brand) filters.brand = args.brand;
+      if (args.vendorId) filters.vendorId = args.vendorId;
+      if (args.isFeatured) filters.isFeatured = true;
+      if (args.onSale) filters.salePrice = { not: null };
+      if (args.newProducts) {
+        // Filter products created in the last 30 days
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        filters.createdAt = { gte: thirtyDaysAgo };
+      }
 
       return getOrSetCache(cacheKey, async () => {
         return prisma.product.findMany({
+          where: filters,
           include: { vendor: true },
         });
       }, CACHE_TTL);
@@ -36,7 +52,7 @@ export const resolvers = {
 
       return getOrSetCache(cacheKey, async () => {
         return prisma.product.findUnique({
-          where: { id: Number(args.id) }, // Assuming `id` is numeric
+          where: { id: Number(args.id) },
           include: { vendor: true },
         });
       }, CACHE_TTL);
@@ -63,13 +79,12 @@ export const resolvers = {
             userId: true,
           },
         });
-  
+
         if (!profile) {
           console.log(`No vendor profile found for user ${parent.id}`);
           return null;
         }
-  
-        // Handle nullable values appropriately
+
         return {
           ...profile,
           businessEmail: profile.businessEmail || "No email provided",
@@ -117,35 +132,24 @@ export const resolvers = {
       { prisma }: Context
     ) => {
       try {
-        // Step 1: Check if the user already exists
-        const existingUser = await prisma.user.findUnique({
-          where: { email },
-        });
-        if (existingUser) {
-          throw new Error('Email is already registered');
-        }
-    
-        // Step 2: Hash the password
+        const existingUser = await prisma.user.findUnique({ where: { email } });
+        if (existingUser) throw new Error('Email is already registered');
+
         const hashedPassword = await bcrypt.hash(password, 10);
-    
-        // Step 3: Create a new user in the database
+
         const newUser = await prisma.user.create({
           data: {
             email,
             password: hashedPassword,
-            firstName: firstName || null, // Default to null if not provided
-            lastName: lastName || null,   // Default to null if not provided
-            birthdate: birthdate ? new Date(birthdate) : null, // Store birthdate as a Date object or null
+            firstName: firstName || null,
+            lastName: lastName || null,
+            birthdate: birthdate ? new Date(birthdate) : null,
             gender,
           },
         });
-    
-        // Step 4: Generate a JWT token for the new user
-        const token = jwt.sign({ userId: newUser.id }, process.env.JWT_SECRET as string, {
-          expiresIn: '1d',
-        });
-    
-        // Step 5: Return the token and user information
+
+        const token = jwt.sign({ userId: newUser.id }, process.env.JWT_SECRET as string, { expiresIn: '1d' });
+
         return {
           token,
           user: {
@@ -153,81 +157,45 @@ export const resolvers = {
             email: newUser.email,
             firstName: newUser.firstName || null,
             lastName: newUser.lastName || null,
-            birthdate: newUser.birthdate
-              ? newUser.birthdate.toISOString().split('T')[0] // Format birthdate as YYYY-MM-DD
-              : null,
+            birthdate: newUser.birthdate ? newUser.birthdate.toISOString().split('T')[0] : null,
             gender: newUser.gender,
           },
         };
       } catch (error: unknown) {
-        // Step 6: Enhanced error logging
         if (error instanceof Error) {
-          console.error('Registration error:', {
-            message: error.message,  // Log the error message
-            stack: error.stack,      // Log the full stack trace
-            details: {
-              email,
-              firstName,
-              lastName,
-              birthdate,
-              gender,
-            }, // Log relevant data for debugging
-          });
-        } else {
-          // If the error is not an instance of Error, log it as is
-          console.error('An unknown error occurred:', error);
+          console.error('Registration error:', error);
         }
-    
-        // Throw an error to propagate it back to the client
         throw new Error('User registration failed');
       }
     },
-    
+
     // Login a user
     loginUser: async (_: any, args: { email: string, password: string }, { prisma }: Context) => {
       const { email, password } = args;
       try {
-        // Find the user by email
         const user = await prisma.user.findUnique({ where: { email } });
-        
-        // Check if user exists and password field is valid
-        if (!user || !user.password) {
-          throw new Error('Invalid credentials');
-        }
-    
-        // Check if the password matches
+        if (!user || !user.password) throw new Error('Invalid credentials');
+
         const isPasswordValid = await bcrypt.compare(password, user.password);
-        if (!isPasswordValid) {
-          throw new Error('Invalid credentials');
-        }
-    
-        // Generate a JWT token
+        if (!isPasswordValid) throw new Error('Invalid credentials');
+
         const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET as string, { expiresIn: '1d' });
-    
-        // Return user data and token, excluding the password
+
         return {
           token,
           user: {
             ...user,
-            password: undefined, // Exclude password from the response
+            password: undefined,
           },
         };
       } catch (error: unknown) {
-        console.error('Login Error:', error);
-    
-        // Type narrowing to ensure 'error' is an instance of 'Error'
         if (error instanceof Error) {
-          if (error.message === 'Invalid credentials') {
-            throw new Error('Invalid credentials');
-          } else {
-            throw new Error('Login failed due to an internal server error');
-          }
+          if (error.message === 'Invalid credentials') throw new Error('Invalid credentials');
         }
-        // Fallback for unexpected non-Error exceptions
-        throw new Error('An unexpected error occurred');
+        throw new Error('Login failed due to an internal server error');
       }
     },
-    
+
     createProduct: async (_: any, args: any, { prisma }: Context) => {
       try {
         const newProduct = await prisma.product.create({
@@ -237,17 +205,15 @@ export const resolvers = {
             category: { connect: { id: args.categoryId } },
             vendor: { connect: { id: args.vendorId } },
             unit: { connect: { id: args.unitId } },
+            isFeatured: args.isFeatured || false,
+            brand: args.brand || null,
           },
         });
 
         invalidateCache(`${PRODUCT_CACHE_KEY_PREFIX}all`);
         return newProduct;
       } catch (error) {
-        if (error instanceof Error) {
-          throw new Error(`Failed to create product: ${error.message}`);
-        } else {
-          throw new Error('Failed to create product due to an unknown error.');
-        }
+        throw new Error(`Failed to create product: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
     },
 
@@ -262,11 +228,7 @@ export const resolvers = {
         invalidateCache(`${PRODUCT_CACHE_KEY_PREFIX}all`);
         return updatedProduct;
       } catch (error) {
-        if (error instanceof Error) {
-          throw new Error(`Failed to update product: ${error.message}`);
-        } else {
-          throw new Error('Failed to update product due to an unknown error.');
-        }
+        throw new Error(`Failed to update product: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
     },
 
@@ -277,11 +239,7 @@ export const resolvers = {
         invalidateCache(`${PRODUCT_CACHE_KEY_PREFIX}all`);
         return true;
       } catch (error) {
-        if (error instanceof Error) {
-          throw new Error(`Failed to delete product: ${error.message}`);
-        } else {
-          throw new Error('Failed to delete product due to an unknown error.');
-        }
+        throw new Error(`Failed to delete product: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
     },
 
@@ -315,11 +273,7 @@ export const resolvers = {
           },
         });
       } catch (error) {
-        if (error instanceof Error) {
-          throw new Error(`Failed to add favorite: ${error.message}`);
-        } else {
-          throw new Error('Failed to add favorite due to an unknown error.');
-        }
+        throw new Error(`Failed to add favorite: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
     },
 
@@ -334,15 +288,10 @@ export const resolvers = {
 
         return result.count > 0;
       } catch (error) {
-        if (error instanceof Error) {
-          throw new Error(`Failed to remove favorite: ${error.message}`);
-        } else {
-          throw new Error('Failed to remove favorite due to an unknown error.');
-        }
+        throw new Error(`Failed to remove favorite: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
     },
 
-    // Wish and Favorite Mutations
     addWish: async (_: any, args: { productId: number }, { prisma, user }: Context) => {
       return await prisma.wish.create({
         data: {
@@ -361,13 +310,11 @@ export const resolvers = {
       });
     },
 
-    // New Mutation to update Vendor Profile
+    // Vendor Profile Mutations
     updateVendorProfile: async (_: any, args: { businessName: string, businessType: string, businessPhone: string }, { prisma, user }: Context) => {
       try {
         const updatedProfile = await prisma.vendorProfile.update({
-          where: {
-            userId: user.id, // Ensure it updates the profile tied to the logged-in user
-          },
+          where: { userId: user.id },
           data: {
             businessName: args.businessName,
             businessType: args.businessType,
@@ -377,15 +324,10 @@ export const resolvers = {
 
         return updatedProfile;
       } catch (error) {
-        if (error instanceof Error) {
-          throw new Error(`Failed to update vendor profile: ${error.message}`);
-        } else {
-          throw new Error('Failed to update vendor profile due to an unknown error.');
-        }
+        throw new Error(`Failed to update vendor profile: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
     },
 
-    // New Mutation to create Vendor Profile (if needed)
     createVendorProfile: async (_: any, args: { businessName: string, businessType: string, businessPhone: string, location: string }, { prisma, user }: Context) => {
       return await prisma.vendorProfile.create({
         data: {
