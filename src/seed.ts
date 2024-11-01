@@ -11,17 +11,17 @@ async function seed() {
       { name: 'METER' },
       { name: 'SACK' },
       { name: 'BUNDLE' },
-      { name: 'SERVE' },  // Already added earlier, keeping it here
-      { name: 'BUDGET' },  // Newly added
-      { name: 'BUCKET' },  // Newly added
-      { name: 'COMBO' },   // Newly added
+      { name: 'SERVE' }, // Already added earlier, keeping it here
+      { name: 'BUDGET' }, // Newly added
+      { name: 'BUCKET' }, // Newly added
+      { name: 'COMBO' }, // Newly added
       { name: 'DOZEN' },
       { name: 'PACK' },
       { name: 'GRAM' },
       { name: 'GALLON' },
-      { name: 'OTHER' }    // Last item
+      { name: 'OTHER' }, // Last item
     ],
-    skipDuplicates: true,  // Prevents adding duplicates
+    skipDuplicates: true, // Prevents adding duplicates
   });
 }
 

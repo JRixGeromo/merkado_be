@@ -5,10 +5,10 @@ export const typeDefs = gql`
   type User {
     id: ID!
     email: String!
-    firstName: String 
-    lastName: String  
-    birthdate: String 
-    gender: Gender    
+    firstName: String
+    lastName: String
+    birthdate: String
+    gender: Gender
     vendorProfile: VendorProfile
   }
 
@@ -26,11 +26,11 @@ export const typeDefs = gql`
 
   type VendorProfile {
     id: ID!
-    businessName: String! 
-    businessType: String! 
+    businessName: String!
+    businessType: String!
     businessPhone: String!
-    businessEmail: String 
-    location: String      
+    businessEmail: String
+    location: String
     user: User!
   }
 
@@ -71,27 +71,33 @@ export const typeDefs = gql`
   }
 
   type Query {
-    users: [User!] 
+    users: [User!]
     products: [Product!]
-    productById(id: ID!): Product 
-    vendorProfileByUserId(userId: ID!): VendorProfile  
+    productById(id: ID!): Product
+    vendorProfileByUserId(userId: ID!): VendorProfile
   }
 
   type Mutation {
     registerUser(
-      email: String!,
-      password: String!,
-      firstName: String,
-      lastName: String, 
-      birthdate: String,
-      gender: Gender,   
-      location: String  
+      email: String!
+      password: String!
+      firstName: String
+      lastName: String
+      birthdate: String
+      gender: Gender
+      location: String
     ): AuthPayload!
 
-    loginUser(email: String!, password: String!): AuthPayload!  
-    
+    loginUser(email: String!, password: String!): AuthPayload!
+
     # Product mutations
-    createProduct(name: String!, price: Float!, categoryId: Int!, vendorId: Int!, unitId: Int!): Product
+    createProduct(
+      name: String!
+      price: Float!
+      categoryId: Int!
+      vendorId: Int!
+      unitId: Int!
+    ): Product
     updateProduct(id: Int!, name: String, price: Float): Product
     deleteProduct(id: Int!): Boolean
 
@@ -106,7 +112,16 @@ export const typeDefs = gql`
     removeWish(productId: ID!): Boolean
 
     # VendorProfile mutations
-    updateVendorProfile(businessName: String!, businessType: String!, businessPhone: String!): VendorProfile
-    createVendorProfile(businessName: String!, businessType: String!, businessPhone: String!, location: String): VendorProfile
+    updateVendorProfile(
+      businessName: String!
+      businessType: String!
+      businessPhone: String!
+    ): VendorProfile
+    createVendorProfile(
+      businessName: String!
+      businessType: String!
+      businessPhone: String!
+      location: String
+    ): VendorProfile
   }
 `;

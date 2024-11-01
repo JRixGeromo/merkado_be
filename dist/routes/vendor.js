@@ -1,7 +1,7 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-const express_1 = require("express");
-const vendorController_1 = require("../controllers/vendorController");
+'use strict';
+Object.defineProperty(exports, '__esModule', { value: true });
+const express_1 = require('express');
+const vendorController_1 = require('../controllers/vendorController');
 const router = (0, express_1.Router)();
 // Create a new vendor
 router.post('/', vendorController_1.createVendor);

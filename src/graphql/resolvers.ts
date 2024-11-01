@@ -20,7 +20,18 @@ export const resolvers = {
     },
 
     // Cache the products query
-    products: async (_: any, args: { categoryId?: number; brand?: string; vendorId?: number; isFeatured?: boolean; onSale?: boolean; newProducts?: boolean }, { prisma }: Context) => {
+    products: async (
+      _: any,
+      args: {
+        categoryId?: number;
+        brand?: string;
+        vendorId?: number;
+        isFeatured?: boolean;
+        onSale?: boolean;
+        newProducts?: boolean;
+      },
+      { prisma }: Context
+    ) => {
       const cacheKey = `${PRODUCT_CACHE_KEY_PREFIX}all`;
 
       const filters: any = {};
@@ -38,24 +49,32 @@ export const resolvers = {
         filters.createdAt = { gte: thirtyDaysAgo };
       }
 
-      return getOrSetCache(cacheKey, async () => {
-        return prisma.product.findMany({
-          where: filters,
-          include: { vendor: true },
-        });
-      }, CACHE_TTL);
+      return getOrSetCache(
+        cacheKey,
+        async () => {
+          return prisma.product.findMany({
+            where: filters,
+            include: { vendor: true },
+          });
+        },
+        CACHE_TTL
+      );
     },
 
     // Cache individual product by ID query
     productById: async (_: any, args: { id: string }, { prisma }: Context) => {
       const cacheKey = `${PRODUCT_CACHE_KEY_PREFIX}${args.id}`;
 
-      return getOrSetCache(cacheKey, async () => {
-        return prisma.product.findUnique({
-          where: { id: Number(args.id) },
-          include: { vendor: true },
-        });
-      }, CACHE_TTL);
+      return getOrSetCache(
+        cacheKey,
+        async () => {
+          return prisma.product.findUnique({
+            where: { id: Number(args.id) },
+            include: { vendor: true },
+          });
+        },
+        CACHE_TTL
+      );
     },
   },
 
@@ -87,12 +106,15 @@ export const resolvers = {
 
         return {
           ...profile,
-          businessEmail: profile.businessEmail || "No email provided",
-          businessLicense: profile.businessLicense || "No license provided",
-          website: profile.website || "No website provided",
+          businessEmail: profile.businessEmail || 'No email provided',
+          businessLicense: profile.businessLicense || 'No license provided',
+          website: profile.website || 'No website provided',
         };
       } catch (error) {
-        console.error(`Error fetching vendor profile for user ${parent.id}:`, error);
+        console.error(
+          `Error fetching vendor profile for user ${parent.id}:`,
+          error
+        );
         throw new Error('Failed to fetch vendor profile');
       }
     },
@@ -148,7 +170,11 @@ export const resolvers = {
           },
         });
 
-        const token = jwt.sign({ userId: newUser.id }, process.env.JWT_SECRET as string, { expiresIn: '1d' });
+        const token = jwt.sign(
+          { userId: newUser.id },
+          process.env.JWT_SECRET as string,
+          { expiresIn: '1d' }
+        );
 
         return {
           token,
@@ -157,7 +183,9 @@ export const resolvers = {
             email: newUser.email,
             firstName: newUser.firstName || null,
             lastName: newUser.lastName || null,
-            birthdate: newUser.birthdate ? newUser.birthdate.toISOString().split('T')[0] : null,
+            birthdate: newUser.birthdate
+              ? newUser.birthdate.toISOString().split('T')[0]
+              : null,
             gender: newUser.gender,
           },
         };
@@ -170,7 +198,11 @@ export const resolvers = {
     },
 
     // Login a user
-    loginUser: async (_: any, args: { email: string, password: string }, { prisma }: Context) => {
+    loginUser: async (
+      _: any,
+      args: { email: string; password: string },
+      { prisma }: Context
+    ) => {
       const { email, password } = args;
       try {
         const user = await prisma.user.findUnique({ where: { email } });
@@ -179,7 +211,11 @@ export const resolvers = {
         const isPasswordValid = await bcrypt.compare(password, user.password);
         if (!isPasswordValid) throw new Error('Invalid credentials');
 
-        const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET as string, { expiresIn: '1d' });
+        const token = jwt.sign(
+          { userId: user.id },
+          process.env.JWT_SECRET as string,
+          { expiresIn: '1d' }
+        );
 
         return {
           token,
@@ -190,7 +226,8 @@ export const resolvers = {
         };
       } catch (error: unknown) {
         if (error instanceof Error) {
-          if (error.message === 'Invalid credentials') throw new Error('Invalid credentials');
+          if (error.message === 'Invalid credentials')
+            throw new Error('Invalid credentials');
         }
         throw new Error('Login failed due to an internal server error');
       }
@@ -213,11 +250,17 @@ export const resolvers = {
         invalidateCache(`${PRODUCT_CACHE_KEY_PREFIX}all`);
         return newProduct;
       } catch (error) {
-        throw new Error(`Failed to create product: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        throw new Error(
+          `Failed to create product: ${error instanceof Error ? error.message : 'Unknown error'}`
+        );
       }
     },
 
-    updateProduct: async (_: any, { id, ...args }: any, { prisma }: Context) => {
+    updateProduct: async (
+      _: any,
+      { id, ...args }: any,
+      { prisma }: Context
+    ) => {
       try {
         const updatedProduct = await prisma.product.update({
           where: { id: parseInt(id, 10) },
@@ -228,22 +271,34 @@ export const resolvers = {
         invalidateCache(`${PRODUCT_CACHE_KEY_PREFIX}all`);
         return updatedProduct;
       } catch (error) {
-        throw new Error(`Failed to update product: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        throw new Error(
+          `Failed to update product: ${error instanceof Error ? error.message : 'Unknown error'}`
+        );
       }
     },
 
-    deleteProduct: async (_: any, { id }: { id: string }, { prisma }: Context) => {
+    deleteProduct: async (
+      _: any,
+      { id }: { id: string },
+      { prisma }: Context
+    ) => {
       try {
         await prisma.product.delete({ where: { id: parseInt(id, 10) } });
         invalidateCache(`${PRODUCT_CACHE_KEY_PREFIX}${id}`);
         invalidateCache(`${PRODUCT_CACHE_KEY_PREFIX}all`);
         return true;
       } catch (error) {
-        throw new Error(`Failed to delete product: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        throw new Error(
+          `Failed to delete product: ${error instanceof Error ? error.message : 'Unknown error'}`
+        );
       }
     },
 
-    addReaction: async (_: any, args: { productId: number, type: 'LIKE' | 'DISLIKE' }, { prisma, user }: Context) => {
+    addReaction: async (
+      _: any,
+      args: { productId: number; type: 'LIKE' | 'DISLIKE' },
+      { prisma, user }: Context
+    ) => {
       return await prisma.reaction.create({
         data: {
           type: args.type,
@@ -253,7 +308,11 @@ export const resolvers = {
       });
     },
 
-    removeReaction: async (_: any, args: { productId: number }, { prisma, user }: Context) => {
+    removeReaction: async (
+      _: any,
+      args: { productId: number },
+      { prisma, user }: Context
+    ) => {
       const result = await prisma.reaction.deleteMany({
         where: {
           productId: args.productId,
@@ -264,7 +323,11 @@ export const resolvers = {
       return result.count > 0;
     },
 
-    addFavorite: async (_: any, args: { productId: number }, { prisma, user }: Context) => {
+    addFavorite: async (
+      _: any,
+      args: { productId: number },
+      { prisma, user }: Context
+    ) => {
       try {
         return await prisma.favorite.create({
           data: {
@@ -273,11 +336,17 @@ export const resolvers = {
           },
         });
       } catch (error) {
-        throw new Error(`Failed to add favorite: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        throw new Error(
+          `Failed to add favorite: ${error instanceof Error ? error.message : 'Unknown error'}`
+        );
       }
     },
 
-    removeFavorite: async (_: any, args: { productId: number }, { prisma, user }: Context) => {
+    removeFavorite: async (
+      _: any,
+      args: { productId: number },
+      { prisma, user }: Context
+    ) => {
       try {
         const result = await prisma.favorite.deleteMany({
           where: {
@@ -288,11 +357,17 @@ export const resolvers = {
 
         return result.count > 0;
       } catch (error) {
-        throw new Error(`Failed to remove favorite: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        throw new Error(
+          `Failed to remove favorite: ${error instanceof Error ? error.message : 'Unknown error'}`
+        );
       }
     },
 
-    addWish: async (_: any, args: { productId: number }, { prisma, user }: Context) => {
+    addWish: async (
+      _: any,
+      args: { productId: number },
+      { prisma, user }: Context
+    ) => {
       return await prisma.wish.create({
         data: {
           product: { connect: { id: args.productId } },
@@ -301,7 +376,11 @@ export const resolvers = {
       });
     },
 
-    removeWish: async (_: any, args: { productId: number }, { prisma, user }: Context) => {
+    removeWish: async (
+      _: any,
+      args: { productId: number },
+      { prisma, user }: Context
+    ) => {
       return await prisma.wish.deleteMany({
         where: {
           productId: args.productId,
@@ -311,7 +390,15 @@ export const resolvers = {
     },
 
     // Vendor Profile Mutations
-    updateVendorProfile: async (_: any, args: { businessName: string, businessType: string, businessPhone: string }, { prisma, user }: Context) => {
+    updateVendorProfile: async (
+      _: any,
+      args: {
+        businessName: string;
+        businessType: string;
+        businessPhone: string;
+      },
+      { prisma, user }: Context
+    ) => {
       try {
         const updatedProfile = await prisma.vendorProfile.update({
           where: { userId: user.id },
@@ -324,11 +411,22 @@ export const resolvers = {
 
         return updatedProfile;
       } catch (error) {
-        throw new Error(`Failed to update vendor profile: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        throw new Error(
+          `Failed to update vendor profile: ${error instanceof Error ? error.message : 'Unknown error'}`
+        );
       }
     },
 
-    createVendorProfile: async (_: any, args: { businessName: string, businessType: string, businessPhone: string, location: string }, { prisma, user }: Context) => {
+    createVendorProfile: async (
+      _: any,
+      args: {
+        businessName: string;
+        businessType: string;
+        businessPhone: string;
+        location: string;
+      },
+      { prisma, user }: Context
+    ) => {
       return await prisma.vendorProfile.create({
         data: {
           user: { connect: { id: user.id } },
