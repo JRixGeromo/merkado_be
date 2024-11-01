@@ -75,6 +75,25 @@ async function seedUnitsOfMeasure() {
     { name: 'suitcase/luggage' },
     { name: 'ream' },
     { name: 'slug' },
+      // Time-Based
+    { name: 'minute' },
+    { name: 'hour' },
+    
+    // Session-Based
+    { name: 'session' },
+    { name: 'visit' },
+    { name: 'appointment' },
+
+    // Package or Series
+    { name: 'package' },
+    { name: 'membership' },
+    { name: 'series' },
+    
+    // Specific Service Types
+    { name: 'haircut' },
+    { name: 'style' },
+    { name: 'massage' },
+    { name: 'treatment' },
     { name: 'other' },
   ];
 
