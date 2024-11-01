@@ -75,6 +75,7 @@ async function seedUnitsOfMeasure() {
     { name: 'suitcase/luggage' },
     { name: 'ream' },
     { name: 'slug' },
+    
       // Time-Based
     { name: 'minute' },
     { name: 'hour' },
