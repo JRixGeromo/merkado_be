@@ -92,14 +92,17 @@ model Rating {
 }
 
 model ProductCategory {
-  id             Int       @id @default(autoincrement())
+  id             Int               @id @default(autoincrement())
   name           String
-  description    String?   // Optional description for the category
-  iconUrl        String?   // Small icon for category representation
-  bannerImageUrl String?   // Banner image for category page or section
-  products       Product[] // Relation to products
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  description    String?           // Optional description for the category
+  iconUrl        String?           // Small icon for category representation
+  bannerImageUrl String?           // Banner image for category page or section
+  parentCategoryId Int?            // Foreign key to self-reference parent category
+  parentCategory   ProductCategory? @relation("Subcategories", fields: [parentCategoryId], references: [id])
+  subcategories    ProductCategory[] @relation("Subcategories")
+  products       Product[]         // Relation to products
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
 }
 
 model SocialAccount {

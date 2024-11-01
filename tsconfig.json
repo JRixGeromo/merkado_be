@@ -1,14 +1,15 @@
 {
   "compilerOptions": {
-    "target": "es2016",                      // Target ECMAScript version
-    "module": "commonjs",                    // Module system for Node.js
-    "outDir": "./dist",                      // Output directory for compiled JavaScript
-    "rootDir": "./src",                      // Root directory for TypeScript source files
-    "esModuleInterop": true,                 // Interoperability between CommonJS and ES modules
+    "target": "es2016",
+    "module": "commonjs",
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
-    "strict": true,                          // Enable strict type-checking
-    "skipLibCheck": true                     // Skip type-checking of declaration files for faster builds
+    "strict": true,
+    "skipLibCheck": true,
+    "types": ["node"]
   },
-  "include": ["src/**/*.ts"],                // Include all .ts files in the src folder
-  "exclude": ["node_modules", "dist"]        // Exclude node_modules and dist directories
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "dist"]
 }
