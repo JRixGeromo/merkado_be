@@ -169,6 +169,36 @@ async function main() {
         { name: 'Solar Products' },
       ],
     },
+    {
+      name: 'Vintage & Collectibles',
+      description: 'Unique and rare items, including antiques, collectibles, and memorabilia for enthusiasts and collectors.',
+      subcategories: [
+        { name: 'Vintage Clothing' },
+        { name: 'Antiques & Furniture' },
+        { name: 'Collectible Toys' },
+        { name: 'Memorabilia' },
+        { name: 'Vinyl Records & Music Memorabilia' },
+        { name: 'Vintage Jewelry & Watches' },
+        { name: 'Art & Prints' },
+        { name: 'Books & Magazines' },
+      ],
+    },
+    // New category: Digital Downloads
+    {
+      name: 'Digital Downloads',
+      description: 'A variety of digital products that can be instantly downloaded, from software to creative assets.',
+      subcategories: [
+        { name: 'E-books & Audiobooks' },
+        { name: 'Software & Applications' },
+        { name: 'Digital Art & Illustrations' },
+        { name: 'Music & Sound Effects' },
+        { name: 'Photos & Stock Images' },
+        { name: 'Templates & Themes' },
+        { name: 'Courses & Tutorials' },
+        { name: '3D Models & CAD Files' },
+        { name: 'Video Clips & Animations' },
+      ],
+    },
   ];
   
   for (const category of categories) {
