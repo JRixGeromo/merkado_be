@@ -124,6 +124,8 @@ model VendorProfile {
   taxId           String?
   website         String?
   location        String?
+  latitude        Float?    // Make latitude optional
+  longitude       Float?    // Make longitude optional
   products        Product[] @relation("VendorProducts")
   user            User      @relation(fields: [userId], references: [id])
   userId          Int       @unique
