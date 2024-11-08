@@ -61,18 +61,20 @@ async function main() {
     },
     {
       name: 'Food & Beverages',
-      description: 'A variety of food and beverages, from fresh produce to ready-to-eat meals.',
+      description: 'A diverse selection of food and beverages, including fresh produce, meats, seafood, packaged and frozen foods, snacks, and drinks. From raw ingredients for cooking to ready-to-eat meals and indulgent treats, this category offers options to satisfy every craving and culinary need.',
       subcategories: [
-        { name: 'Fresh Produce' },
+        { name: 'Fresh Produce' }, // Fresh fruits, vegetables, and herbs, Chicken Eggs, Duck Eggs, Quail Eggs
         { name: 'Packaged Foods' },
         { name: 'Frozen Foods' },
         { name: 'Beverages' },
         { name: 'Snacks & Confectionery' },
+        { name: 'Meats & Poultry' }, // Fresh and frozen meats and poultry products.
+        { name: 'Seafood' },
       ],
     },
     {
       name: 'Dining & Restaurants',
-      description: 'Explore a variety of dining options, from quick service to fine dining, catering to all tastes and occasions.',
+       description: 'Explore a variety of dining options, from quick service to fine dining, catering to all tastes and occasions. Whether you\'re looking for a casual meal, a luxurious dining experience, or specialized catering services, this category has it all.',
       subcategories: [
         { name: 'Fast Food & Quick Service' },
         { name: 'Casual Dining' },

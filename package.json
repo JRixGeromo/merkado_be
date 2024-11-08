@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
+    "seed:categories": "ts-node prisma/seed.ts",
+    "seed:testData": "ts-node prisma/testDataSeed.ts",
+    "seed:unitOfMeasure": "ts-node prisma/unitOfMeasureSeed.ts",
     "dev": "ts-node src/app.ts",
     "build": "tsc",
     "start": "node dist/app.js",
